@@ -45,50 +45,71 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   }, [])
 
   const stopCamera = useCallback(() => {
-    console.log('🎥 SIMPLE: Stopping camera...')
+    console.log('🎥 NUCLEAR: Starting aggressive camera shutdown...')
     
     // Clear video element first
     if (videoRef.current) {
-      console.log('🎥 SIMPLE: Pausing and clearing video')
+      console.log('🎥 NUCLEAR: Pausing and clearing video')
       videoRef.current.pause()
       videoRef.current.srcObject = null
       videoRef.current.load() // Force reload to clear buffer
+      // Additional video cleanup
+      videoRef.current.removeAttribute('src')
+      videoRef.current.removeAttribute('srcObject')
     }
     
     if (streamRef.current) {
-      console.log('🎥 SIMPLE: Stream has', streamRef.current.getTracks().length, 'tracks')
-      streamRef.current.getTracks().forEach((track, index) => {
-        console.log(`🎥 SIMPLE: Stopping track ${index}:`, track.label, 'State:', track.readyState)
-        if (track.readyState === 'live') {
-          track.stop()
-          console.log(`🎥 SIMPLE: Track ${index} stopped, new state:`, track.readyState)
-        }
-      })
+      console.log('🎥 NUCLEAR: Stream has', streamRef.current.getTracks().length, 'tracks')
       
-      // Extra aggressive cleanup
-      if (streamRef.current.active) {
-        console.log('🎥 SIMPLE: Stream still active, forcing stop on all tracks again')
-        streamRef.current.getTracks().forEach(track => {
-          track.enabled = false
-          track.stop()
-        })
-      }
+      // Stop each track multiple times with different methods
+      streamRef.current.getTracks().forEach((track, index) => {
+        console.log(`🎥 NUCLEAR: Stopping track ${index}:`, track.label, 'State:', track.readyState)
+        
+        // Method 1: Standard stop
+        track.stop()
+        
+        // Method 2: Disable then stop
+        track.enabled = false
+        track.stop()
+        
+        // Method 3: Clone and stop (sometimes helps)
+        try {
+          const clonedTrack = track.clone()
+          clonedTrack.stop()
+        } catch (e) {
+          console.log('🎥 NUCLEAR: Could not clone track (this is OK)')
+        }
+        
+        console.log(`🎥 NUCLEAR: Track ${index} final state:`, track.readyState)
+      })
       
       streamRef.current = null
     }
     
     setIsStreaming(false)
-    console.log('🎥 SIMPLE: Camera cleanup complete')
+    console.log('🎥 NUCLEAR: Basic cleanup complete, trying browser-level reset...')
     
-    // Double-check after a delay
-    setTimeout(() => {
-      console.log('🎥 SIMPLE: Checking if camera is still active after 1 second...')
-      if (streamRef.current) {
-        console.log('🎥 SIMPLE: WARNING: Stream still exists!')
-      } else {
-        console.log('🎥 SIMPLE: Stream properly cleared')
+    // Nuclear option: Try to request camera again to force release
+    setTimeout(async () => {
+      try {
+        console.log('🎥 NUCLEAR: Requesting camera to force release...')
+        const tempStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 1, height: 1 } // Minimal request
+        })
+        console.log('🎥 NUCLEAR: Got temporary stream, immediately stopping...')
+        tempStream.getTracks().forEach(track => {
+          track.stop()
+        })
+        console.log('🎥 NUCLEAR: Temporary stream stopped - this should force camera release')
+      } catch (e) {
+        console.log('🎥 NUCLEAR: Could not get temporary stream (this might be OK):', e.message)
       }
-    }, 1000)
+    }, 100)
+    
+    // Double-check after longer delay
+    setTimeout(() => {
+      console.log('🎥 NUCLEAR: Final check - camera should be off now')
+    }, 2000)
   }, [])
 
   const capturePhoto = useCallback(() => {
@@ -191,7 +212,15 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           Cancel
         </button>
         <h2 className="text-lg font-semibold">Take Photo</h2>
-        <div className="w-16"></div> {/* Spacer */}
+        <button
+          onClick={() => {
+            console.log('🎥 MANUAL: User clicked manual stop')
+            stopCamera()
+          }}
+          className="text-red-400 text-xs px-2 py-1 border border-red-400 rounded hover:bg-red-400 hover:text-black"
+        >
+          Stop Camera
+        </button>
       </div>
 
       {/* Camera View */}
