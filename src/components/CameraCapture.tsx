@@ -15,22 +15,53 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   const startCamera = useCallback(async () => {
     try {
       setError('')
+      console.log('Starting camera access...')
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported in this browser')
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment', // Use back camera on mobile
+          facingMode: 'user', // Use front camera on laptops (better for testing)
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
       })
 
+      console.log('Camera stream obtained:', stream)
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
-        setIsStreaming(true)
+        
+        // Wait for video to load
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded')
+          setIsStreaming(true)
+        }
+        
+        // Handle video play
+        videoRef.current.play().catch(err => {
+          console.error('Error playing video:', err)
+        })
       }
     } catch (err) {
       console.error('Error accessing camera:', err)
-      setError('Unable to access camera. Please check permissions.')
+      let errorMessage = 'Unable to access camera. '
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage += 'Please allow camera permissions in your browser.'
+      } else if (err.name === 'NotFoundError') {
+        errorMessage += 'No camera found on this device.'
+      } else if (err.name === 'NotReadableError') {
+        errorMessage += 'Camera is being used by another application.'
+      } else {
+        errorMessage += 'Please check your camera settings and permissions.'
+      }
+      
+      setError(errorMessage)
     }
   }, [])
 
