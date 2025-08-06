@@ -25,19 +25,50 @@ export interface ClothingItem {
   updated_at: string
 }
 
-export interface SavedOutfit {
+export interface Outfit {
   id: string
   user_id: string
   name: string
-  item_ids: string[] // Array of clothing_items IDs
   created_at: string
+}
+
+export interface OutfitItem {
+  outfit_id: string
+  item_id: string
+  role: 'top' | 'bottom' | 'shoes' | 'accessory'
 }
 
 export interface WearLog {
   id: string
   user_id: string
-  outfit_id: string | null
-  item_ids: string[] // Array of clothing_items IDs
+  outfit_id: string
   worn_date: string
   created_at: string
+}
+
+export interface Database {
+  public: {
+    Tables: {
+      clothing_items: {
+        Row: ClothingItem
+        Insert: Omit<ClothingItem, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<ClothingItem, 'id' | 'created_at'>>
+      }
+      outfits: {
+        Row: Outfit
+        Insert: Omit<Outfit, 'id' | 'created_at'>
+        Update: Partial<Omit<Outfit, 'id' | 'created_at'>>
+      }
+      outfit_items: {
+        Row: OutfitItem
+        Insert: OutfitItem
+        Update: never
+      }
+      wear_logs: {
+        Row: WearLog
+        Insert: Omit<WearLog, 'id' | 'created_at'>
+        Update: never
+      }
+    }
+  }
 }

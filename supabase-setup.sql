@@ -99,3 +99,93 @@ CREATE POLICY "Users can update their own images" ON storage.objects
 
 CREATE POLICY "Users can delete their own images" ON storage.objects
   FOR DELETE USING (bucket_id = 'clothing-images' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ===============================================
+-- OUTFIT TABLES (for outfit suggestions & saves)
+-- ===============================================
+
+-- Create outfits table
+CREATE TABLE outfits (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create outfit_items junction table
+CREATE TABLE outfit_items (
+    outfit_id UUID REFERENCES outfits(id) ON DELETE CASCADE,
+    item_id UUID REFERENCES clothing_items(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('top', 'bottom', 'shoes', 'accessory')),
+    PRIMARY KEY (outfit_id, item_id)
+);
+
+-- Create wear_logs table
+CREATE TABLE wear_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    outfit_id UUID REFERENCES outfits(id) ON DELETE CASCADE NOT NULL,
+    worn_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_outfits_user_id ON outfits(user_id);
+CREATE INDEX idx_outfit_items_outfit_id ON outfit_items(outfit_id);
+CREATE INDEX idx_wear_logs_user_id_date ON wear_logs(user_id, worn_date);
+
+-- Enable RLS for outfit tables
+ALTER TABLE outfits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE outfit_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wear_logs ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for outfits
+CREATE POLICY "Users can only see their own outfits" ON outfits
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only insert their own outfits" ON outfits
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can only update their own outfits" ON outfits
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only delete their own outfits" ON outfits
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS policies for outfit_items
+CREATE POLICY "Users can only see outfit_items for their outfits" ON outfit_items
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM outfits 
+            WHERE outfits.id = outfit_items.outfit_id 
+            AND outfits.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can only insert outfit_items for their outfits" ON outfit_items
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM outfits 
+            WHERE outfits.id = outfit_items.outfit_id 
+            AND outfits.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can only delete outfit_items for their outfits" ON outfit_items
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM outfits 
+            WHERE outfits.id = outfit_items.outfit_id 
+            AND outfits.user_id = auth.uid()
+        )
+    );
+
+-- RLS policies for wear_logs
+CREATE POLICY "Users can only see their own wear logs" ON wear_logs
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only insert their own wear logs" ON wear_logs
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can only delete their own wear logs" ON wear_logs
+    FOR DELETE USING (auth.uid() = user_id);
