@@ -15,99 +15,28 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   const startCamera = useCallback(async () => {
     try {
       setError('')
-      console.log('Starting camera access...')
+      console.log('🎥 SIMPLE: Starting camera access...')
       
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported in this browser')
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user', // Use front camera on laptops (better for testing)
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
+        video: true // Simplest possible constraints
       })
 
-      console.log('Camera stream obtained:', stream)
+      console.log('🎥 SIMPLE: Camera stream obtained:', stream)
 
       if (videoRef.current) {
         const video = videoRef.current
         streamRef.current = stream
         
-        console.log('Setting up video element...')
-        
-        // Wait for video to start playing
-        const handleVideoReady = () => {
-          console.log('Video is ready and playing')
-          setIsStreaming(true)
-        }
-        
-        // Set up event handlers BEFORE setting srcObject
-        video.onloadedmetadata = () => {
-          console.log('Video metadata loaded, readyState:', video.readyState)
-          video.play().then(() => {
-            console.log('Video play() succeeded')
-            handleVideoReady()
-          }).catch(err => {
-            console.error('Error playing video:', err)
-            // Force show video even if play fails
-            handleVideoReady()
-          })
-        }
-        
-        video.oncanplay = () => {
-          console.log('Video can start playing, readyState:', video.readyState)
-          if (!isStreaming) {
-            handleVideoReady()
-          }
-        }
-        
-        video.onplaying = () => {
-          console.log('Video is now playing')
-          if (!isStreaming) {
-            handleVideoReady()
-          }
-        }
-        
-        video.onerror = (err) => {
-          console.error('Video error:', err)
-        }
-        
-        // Set video properties
-        video.autoplay = true
-        video.playsInline = true
-        video.muted = true
-        
-        // Now set the stream - this should trigger the events
-        console.log('Setting video srcObject...')
+        console.log('🎥 SIMPLE: Setting video srcObject directly...')
         video.srcObject = stream
         
-        // Fallback timeout - force show after 1 second
-        setTimeout(() => {
-          console.log('Fallback timeout: current readyState:', video.readyState, 'isStreaming:', isStreaming)
-          if (!isStreaming) {
-            console.log('Forcing video display via timeout')
-            handleVideoReady()
-          }
-        }, 1000)
+        // Force show immediately - no waiting for events
+        console.log('🎥 SIMPLE: Forcing video display immediately')
+        setIsStreaming(true)
       }
     } catch (err) {
-      console.error('Error accessing camera:', err)
-      let errorMessage = 'Unable to access camera. '
-      
-      if (err.name === 'NotAllowedError') {
-        errorMessage += 'Please allow camera permissions in your browser.'
-      } else if (err.name === 'NotFoundError') {
-        errorMessage += 'No camera found on this device.'
-      } else if (err.name === 'NotReadableError') {
-        errorMessage += 'Camera is being used by another application.'
-      } else {
-        errorMessage += 'Please check your camera settings and permissions.'
-      }
-      
-      setError(errorMessage)
+      console.error('🎥 SIMPLE: Error accessing camera:', err)
+      setError('Camera access failed: ' + err.message)
     }
   }, [])
 
