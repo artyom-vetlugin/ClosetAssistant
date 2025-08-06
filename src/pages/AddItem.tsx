@@ -22,8 +22,10 @@ const AddItem = () => {
   const [showCamera, setShowCamera] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [detectedColor, setDetectedColor] = useState<string>('')
+  const [colorDetectionLoading, setColorDetectionLoading] = useState(false)
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     const validation = ImageService.validateImageFile(file)
     if (!validation.isValid) {
       setError(validation.error || 'Invalid file')
@@ -38,6 +40,20 @@ const AddItem = () => {
     setSelectedFile(file)
     setPreviewUrl(ImageService.createPreviewUrl(file))
     setError('')
+
+    // Detect color automatically
+    setColorDetectionLoading(true)
+    try {
+      const dominantColor = await ImageService.extractDominantColor(file)
+      setDetectedColor(dominantColor)
+      setColor(dominantColor as ClothingItem['color'])
+      console.log('🎨 Detected color:', dominantColor)
+    } catch (error) {
+      console.log('🎨 Color detection failed:', error)
+      setDetectedColor('')
+    } finally {
+      setColorDetectionLoading(false)
+    }
   }
 
   const handleCameraCapture = (file: File) => {
@@ -220,6 +236,12 @@ const AddItem = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Color *
+                {colorDetectionLoading && (
+                  <span className="ml-2 text-sm text-blue-600">🎨 Detecting color...</span>
+                )}
+                {detectedColor && !colorDetectionLoading && (
+                  <span className="ml-2 text-sm text-green-600">✨ Auto-detected: {detectedColor}</span>
+                )}
               </label>
               <select 
                 value={color}
@@ -227,6 +249,11 @@ const AddItem = () => {
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 required
               >
+                {detectedColor && (
+                  <option value={detectedColor} className="font-semibold bg-green-50">
+                    🎨 {detectedColor.charAt(0).toUpperCase() + detectedColor.slice(1)} (detected)
+                  </option>
+                )}
                 <option value="black">Black</option>
                 <option value="white">White</option>
                 <option value="gray">Gray</option>
@@ -238,6 +265,8 @@ const AddItem = () => {
                 <option value="purple">Purple</option>
                 <option value="brown">Brown</option>
                 <option value="orange">Orange</option>
+                <option value="navy">Navy</option>
+                <option value="beige">Beige</option>
               </select>
             </div>
 

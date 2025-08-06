@@ -2,6 +2,14 @@ import imageCompression from 'browser-image-compression'
 import { v4 as uuidv4 } from 'uuid'
 import { supabase } from './supabase'
 
+// Color detection types
+interface ColorRange {
+  name: string
+  r: [number, number]
+  g: [number, number]
+  b: [number, number]
+}
+
 export interface ImageUploadOptions {
   maxSizeMB?: number
   maxWidthOrHeight?: number
@@ -135,5 +143,129 @@ export class ImageService {
    */
   static revokePreviewUrl(url: string): void {
     URL.revokeObjectURL(url)
+  }
+
+  /**
+   * Extract dominant color from image file
+   */
+  static async extractDominantColor(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      if (!ctx) {
+        reject(new Error('Canvas context not available'))
+        return
+      }
+      
+      img.onload = () => {
+        try {
+          // Resize to small canvas for performance (100x100 pixels)
+          canvas.width = 100
+          canvas.height = 100
+          ctx.drawImage(img, 0, 0, 100, 100)
+          
+          // Get image data
+          const imageData = ctx.getImageData(0, 0, 100, 100)
+          const colorCounts: { [key: string]: number } = {}
+          
+          // Sample pixels and count colors (every 4th pixel for performance)
+          for (let i = 0; i < imageData.data.length; i += 16) {
+            const r = imageData.data[i]
+            const g = imageData.data[i + 1]
+            const b = imageData.data[i + 2]
+            const alpha = imageData.data[i + 3]
+            
+            // Skip transparent pixels
+            if (alpha < 128) continue
+            
+            // Convert RGB to color name
+            const colorName = this.rgbToColorName(r, g, b)
+            colorCounts[colorName] = (colorCounts[colorName] || 0) + 1
+          }
+          
+          // Find most frequent color
+          const colors = Object.keys(colorCounts)
+          if (colors.length === 0) {
+            resolve('gray') // fallback
+            return
+          }
+          
+          const dominantColor = colors.reduce((a, b) => 
+            colorCounts[a] > colorCounts[b] ? a : b
+          )
+          
+          resolve(dominantColor)
+        } catch (error) {
+          reject(error)
+        } finally {
+          // Clean up
+          URL.revokeObjectURL(img.src)
+        }
+      }
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image for color detection'))
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  /**
+   * Convert RGB values to closest color name
+   */
+  private static rgbToColorName(r: number, g: number, b: number): string {
+    // Define color ranges for common clothing colors
+    const colorRanges: ColorRange[] = [
+      { name: 'black', r: [0, 60], g: [0, 60], b: [0, 60] },
+      { name: 'white', r: [200, 255], g: [200, 255], b: [200, 255] },
+      { name: 'gray', r: [80, 180], g: [80, 180], b: [80, 180] },
+      { name: 'red', r: [120, 255], g: [0, 80], b: [0, 80] },
+      { name: 'blue', r: [0, 80], g: [0, 120], b: [120, 255] },
+      { name: 'navy', r: [0, 50], g: [0, 50], b: [80, 150] },
+      { name: 'green', r: [0, 120], g: [80, 200], b: [0, 120] },
+      { name: 'yellow', r: [180, 255], g: [180, 255], b: [0, 100] },
+      { name: 'orange', r: [200, 255], g: [80, 180], b: [0, 80] },
+      { name: 'purple', r: [80, 180], g: [0, 100], b: [120, 255] },
+      { name: 'pink', r: [200, 255], g: [100, 200], b: [150, 220] },
+      { name: 'brown', r: [80, 150], g: [40, 100], b: [20, 80] },
+      { name: 'beige', r: [180, 255], g: [150, 220], b: [100, 180] },
+    ]
+    
+    // Calculate brightness to help distinguish similar colors
+    const brightness = (r + g + b) / 3
+    
+    // Special case for very dark colors
+    if (brightness < 40) {
+      return 'black'
+    }
+    
+    // Special case for very bright colors
+    if (brightness > 220 && Math.abs(r - g) < 30 && Math.abs(g - b) < 30) {
+      return 'white'
+    }
+    
+    // Find closest color match
+    for (const color of colorRanges) {
+      if (r >= color.r[0] && r <= color.r[1] &&
+          g >= color.g[0] && g <= color.g[1] &&
+          b >= color.b[0] && b <= color.b[1]) {
+        return color.name
+      }
+    }
+    
+    // Fallback based on dominant channel
+    if (r > g && r > b) {
+      return r > 150 ? 'red' : 'brown'
+    } else if (g > r && g > b) {
+      return g > 150 ? 'green' : 'brown'
+    } else if (b > r && b > g) {
+      return b > 150 ? 'blue' : 'navy'
+    }
+    
+    // Final fallback
+    return 'gray'
   }
 }

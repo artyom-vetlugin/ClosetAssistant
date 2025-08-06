@@ -18,7 +18,7 @@
 ## 4. MVP Scope
 
 ### In
-- Add items: photo upload (camera or gallery) + **manual tags** (type, color, season).
+- Add items: photo upload (camera or gallery) + **smart color detection** + manual tags (type, color, season).
 - Browse wardrobe by filters (type, color, season).
 - **Edit & delete items**: modify item details or remove items from wardrobe.
 - **Suggest outfits** using simple pairing rules (tops + bottoms + shoes; accessories optional).
@@ -39,7 +39,9 @@
 **As a** user, **I want** to add a clothing item with a photo and tags **so that** I can organize my wardrobe.
 
 **Acceptance Criteria:**
-- Given I open **Add Item**, when I select/capture a photo and fill **Type, Color, Season**, **then** I can save the item.
+- Given I open **Add Item**, when I select/capture a photo, **then** the app automatically detects and suggests the primary color.
+- I can accept the detected color or manually select a different one from the dropdown.
+- When I fill **Type, Color, Season**, **then** I can save the item.
 - If **Type/Color/Season** is missing, **then** the **Save** button is disabled and I see a short hint.
 - After save, I see a success toast and the new item appears in **My Wardrobe**.
 
@@ -159,6 +161,7 @@ Start with deterministic, readable rules:
 
 **Day 5-7: Add Items Feature**
 - Build "Add Item" form (photo + basic info)
+- Implement automatic color detection from photos
 - Implement image upload to Supabase Storage
 - Create simple item display/grid
 
