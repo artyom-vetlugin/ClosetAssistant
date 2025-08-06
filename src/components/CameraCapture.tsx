@@ -36,16 +36,48 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         videoRef.current.srcObject = stream
         streamRef.current = stream
         
-        // Wait for video to load
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded')
+        // Set up video element
+        const video = videoRef.current
+        video.srcObject = stream
+        video.autoplay = true
+        video.playsInline = true
+        video.muted = true
+        
+        // Wait for video to start playing
+        const handleVideoReady = () => {
+          console.log('Video is ready and playing')
           setIsStreaming(true)
         }
         
-        // Handle video play
-        videoRef.current.play().catch(err => {
-          console.error('Error playing video:', err)
-        })
+        // Try multiple events to ensure video starts
+        video.onloadedmetadata = () => {
+          console.log('Video metadata loaded')
+          video.play().then(() => {
+            console.log('Video play() succeeded')
+            handleVideoReady()
+          }).catch(err => {
+            console.error('Error playing video:', err)
+            // Sometimes metadata loads but play fails, try again
+            setTimeout(() => {
+              video.play().then(handleVideoReady).catch(console.error)
+            }, 100)
+          })
+        }
+        
+        video.oncanplay = () => {
+          console.log('Video can start playing')
+          if (!isStreaming) {
+            handleVideoReady()
+          }
+        }
+        
+        // Fallback timeout in case events don't fire
+        setTimeout(() => {
+          if (!isStreaming && video.readyState >= 2) {
+            console.log('Fallback: Video seems ready, forcing stream start')
+            handleVideoReady()
+          }
+        }, 2000)
       }
     } catch (err) {
       console.error('Error accessing camera:', err)
@@ -147,7 +179,9 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
             autoPlay
             playsInline
             muted
+            controls={false}
             className="max-w-full max-h-full object-contain"
+            style={{ transform: 'scaleX(-1)' }} // Mirror the video like a selfie
           />
         ) : (
           <div className="text-center text-white">
