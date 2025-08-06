@@ -46,23 +46,49 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
 
   const stopCamera = useCallback(() => {
     console.log('🎥 SIMPLE: Stopping camera...')
+    
+    // Clear video element first
+    if (videoRef.current) {
+      console.log('🎥 SIMPLE: Pausing and clearing video')
+      videoRef.current.pause()
+      videoRef.current.srcObject = null
+      videoRef.current.load() // Force reload to clear buffer
+    }
+    
     if (streamRef.current) {
-      console.log('🎥 SIMPLE: Stopping all video tracks')
-      streamRef.current.getTracks().forEach(track => {
-        console.log('🎥 SIMPLE: Stopping track:', track.label)
-        track.stop()
+      console.log('🎥 SIMPLE: Stream has', streamRef.current.getTracks().length, 'tracks')
+      streamRef.current.getTracks().forEach((track, index) => {
+        console.log(`🎥 SIMPLE: Stopping track ${index}:`, track.label, 'State:', track.readyState)
+        if (track.readyState === 'live') {
+          track.stop()
+          console.log(`🎥 SIMPLE: Track ${index} stopped, new state:`, track.readyState)
+        }
       })
+      
+      // Extra aggressive cleanup
+      if (streamRef.current.active) {
+        console.log('🎥 SIMPLE: Stream still active, forcing stop on all tracks again')
+        streamRef.current.getTracks().forEach(track => {
+          track.enabled = false
+          track.stop()
+        })
+      }
+      
       streamRef.current = null
     }
     
-    // Clear video element
-    if (videoRef.current) {
-      console.log('🎥 SIMPLE: Clearing video srcObject')
-      videoRef.current.srcObject = null
-    }
-    
     setIsStreaming(false)
-    console.log('🎥 SIMPLE: Camera stopped')
+    console.log('🎥 SIMPLE: Camera cleanup complete')
+    
+    // Double-check after a delay
+    setTimeout(() => {
+      console.log('🎥 SIMPLE: Checking if camera is still active after 1 second...')
+      if (streamRef.current) {
+        console.log('🎥 SIMPLE: WARNING: Stream still exists!')
+      } else {
+        console.log('🎥 SIMPLE: Stream properly cleared')
+      }
+    }, 1000)
   }, [])
 
   const capturePhoto = useCallback(() => {
@@ -104,18 +130,52 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
     
     // Also stop camera when user leaves the page
     const handleBeforeUnload = () => {
-      console.log('🎥 SIMPLE: Page unloading, stopping camera')
+      console.log('🎥 SIMPLE: Page unloading, emergency camera stop')
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
+        streamRef.current.getTracks().forEach(track => {
+          track.enabled = false
+          track.stop()
+        })
+      }
+      // Try to get all active media streams and stop them
+      navigator.mediaDevices.getUserMedia({ video: false, audio: false }).catch(() => {
+        // This might help release camera resources
+      })
+    }
+    
+    // Also try to stop camera when visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('🎥 SIMPLE: Page hidden, stopping camera')
+        stopCamera()
       }
     }
     
     window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     
     // Cleanup on unmount
     return () => {
-      console.log('🎥 SIMPLE: Component unmounting, stopping camera')
+      console.log('🎥 SIMPLE: Component unmounting, AGGRESSIVE camera stop')
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      
+      // Force stop all tracks immediately
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.enabled = false
+          track.stop()
+        })
+        streamRef.current = null
+      }
+      
+      // Clear video element aggressively
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.srcObject = null
+        videoRef.current.load()
+      }
+      
       stopCamera()
     }
   }, [startCamera, stopCamera])
