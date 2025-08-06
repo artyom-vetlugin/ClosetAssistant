@@ -111,7 +111,7 @@ const Dashboard = () => {
                 {Object.entries(stats.byType).map(([type, count]) => (
                   <div key={type} className="flex justify-between">
                     <span className="capitalize">{type}s:</span>
-                    <span className="font-medium">{count}</span>
+                    <span className="font-medium">{String(count)}</span>
                   </div>
                 ))}
               </div>
@@ -120,7 +120,7 @@ const Dashboard = () => {
                 {Object.entries(stats.byColor).slice(0, 4).map(([color, count]) => (
                   <div key={color} className="flex justify-between">
                     <span className="capitalize">{color}:</span>
-                    <span className="font-medium">{count}</span>
+                    <span className="font-medium">{String(count)}</span>
                   </div>
                 ))}
               </div>

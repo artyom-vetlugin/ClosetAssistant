@@ -40,7 +40,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       }, 100)
     } catch (err) {
       console.error('🎥 SIMPLE: Error accessing camera:', err)
-      setError('Camera access failed: ' + err.message)
+      setError('Camera access failed: ' + (err instanceof Error ? err.message : String(err)))
     }
   }, [])
 
@@ -77,7 +77,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           const clonedTrack = track.clone()
           clonedTrack.stop()
         } catch (e) {
-          console.log('🎥 NUCLEAR: Could not clone track (this is OK)')
+          console.log('🎥 NUCLEAR: Could not clone track (this is OK):', e instanceof Error ? e.message : String(e))
         }
         
         console.log(`🎥 NUCLEAR: Track ${index} final state:`, track.readyState)
@@ -102,7 +102,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         })
         console.log('🎥 NUCLEAR: Temporary stream stopped - this should force camera release')
       } catch (e) {
-        console.log('🎥 NUCLEAR: Could not get temporary stream (this might be OK):', e.message)
+        console.log('🎥 NUCLEAR: Could not get temporary stream (this might be OK):', e instanceof Error ? e.message : String(e))
       }
     }, 100)
     
