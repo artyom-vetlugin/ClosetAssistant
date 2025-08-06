@@ -1,52 +1,69 @@
-# ClosetAssistant 👗📱
+# React + TypeScript + Vite
 
-A simple, fast outfit suggestion app that helps you make better use of your existing wardrobe.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 🎯 Vision
+Currently, two official plugins are available:
 
-ClosetAssistant helps people make faster outfit decisions with what they already own. Users snap/upload clothing photos, tag them in seconds, and get simple, rule-based outfit suggestions they can visualize and save—available on phone and desktop as a lightweight, installable web app.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 🚀 Features (MVP)
+## Expanding the ESLint configuration
 
-- **Add Items**: Photo upload + manual tags (type, color, season)
-- **Browse Wardrobe**: Filter by type, color, season
-- **Outfit Suggestions**: Simple pairing rules (tops + bottoms + shoes)
-- **Visual Builder**: Clean collage view with save functionality
-- **Wear Log**: Track what you wore and when
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## 🛠 Tech Stack
+```js
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-- **Frontend**: React + Vite + TypeScript + Tailwind CSS
-- **Backend**: Supabase (Auth, Database, Storage)
-- **Deployment**: Vercel
-- **Platform**: Progressive Web App (PWA)
+      // Remove tseslint.configs.recommended and replace with this
+      ...tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      ...tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      ...tseslint.configs.stylisticTypeChecked,
 
-## 📋 Getting Started
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
-This project is currently in the planning phase. See [VISION.md](./VISION.md) for complete project specifications and implementation plan.
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## 🎓 Learning Goals
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-This project serves as a learning experience for:
-- React Hooks and modern React patterns
-- API integration with Supabase
-- File handling and image upload
-- Responsive design and PWA development
-- Database design and management
-
-## 📅 Timeline
-
-- **Week 1**: Core functionality (auth, add items, basic layout)
-- **Week 2**: Outfit features, PWA setup, deployment
-
-## 🤝 Contributing
-
-This is a personal learning project, but feedback and suggestions are welcome!
-
-## 📄 License
-
-MIT License - feel free to use this code for your own learning projects.
-
----
-
-*Built with ❤️ as a learning project*
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
