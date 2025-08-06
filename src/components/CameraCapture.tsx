@@ -27,12 +27,17 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         const video = videoRef.current
         streamRef.current = stream
         
+        console.log('🎥 SIMPLE: Video element found:', videoRef.current)
         console.log('🎥 SIMPLE: Setting video srcObject directly...')
         video.srcObject = stream
         
         // Force show immediately - no waiting for events
         console.log('🎥 SIMPLE: Forcing video display immediately')
         setIsStreaming(true)
+        
+        console.log('🎥 SIMPLE: isStreaming state should now be true')
+      } else {
+        console.log('🎥 SIMPLE: ERROR - videoRef.current is null!')
       }
     } catch (err) {
       console.error('🎥 SIMPLE: Error accessing camera:', err)
