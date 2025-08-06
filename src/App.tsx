@@ -1,24 +1,41 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import AddItem from './pages/AddItem';
 import Wardrobe from './pages/Wardrobe';
 import Suggestions from './pages/Suggestions';
 import History from './pages/History';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <Layout>
+      <AuthProvider>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/add-item" element={<AddItem />} />
-          <Route path="/wardrobe" element={<Wardrobe />} />
-          <Route path="/suggestions" element={<Suggestions />} />
-          <Route path="/history" element={<History />} />
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          {/* Protected routes */}
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/add-item" element={<AddItem />} />
+                  <Route path="/wardrobe" element={<Wardrobe />} />
+                  <Route path="/suggestions" element={<Suggestions />} />
+                  <Route path="/history" element={<History />} />
+                </Routes>
+              </Layout>
+            </ProtectedRoute>
+          } />
         </Routes>
-      </Layout>
+      </AuthProvider>
     </Router>
   );
 }
