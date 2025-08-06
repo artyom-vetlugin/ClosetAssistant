@@ -1,6 +1,6 @@
 # ClosetAssistant - Vision & Scope Document
 
-## 1. Product Vision (Polished, Concise)
+## 1. Product Vision
 
 **Closet Assistant** helps people make faster outfit decisions with what they already own. Users snap/upload clothing photos, tag them in seconds, and get simple, rule-based outfit suggestions they can visualize and save—available on phone and desktop as a lightweight, installable web app.
 
@@ -9,13 +9,13 @@
 - **Problem:** Picking outfits is slow; people forget what they own and repeat the same few combinations.
 - **Value:** A fast, visual tool that organizes clothes and proposes sensible outfits in under a minute—reducing decision fatigue and surfacing underused pieces.
 
-## 3. Target Users (Keep it Tight)
+## 3. Target Users
 
 - **Time-savvy students/early professionals** who want quick outfit ideas.
 - **Wardrobe owners (20–40 items+)** who lose track of what they have.
 - **Minimalists/budget-conscious** users aiming to reuse more, buy less.
 
-## 4. MVP Scope (Strict, Demo-Ready in Days)
+## 4. MVP Scope
 
 ### In
 - Add items: photo upload (camera or gallery) + **manual tags** (type, color, season).
@@ -99,7 +99,7 @@ Start with deterministic, readable rules:
 
 > Implementation tip: pre-compute neutral vs non-neutral at tag time. Keep rules in one file (e.g., `rules.ts`) for easy iteration.
 
-## 7. Data Model (Minimal & Future-Proof)
+## 7. Data Model
 
 ### users
 - id (uuid), email, display_name, created_at
