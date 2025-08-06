@@ -35,6 +35,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 2. Copy the entire contents of `supabase-setup.sql`
 3. Paste and click **Run**
 4. Verify tables were created in **Table Editor**
+5. Should show "Success. No rows returned" when complete
 
 ### 6. Configure Authentication
 1. Go to **Authentication** → **Settings**

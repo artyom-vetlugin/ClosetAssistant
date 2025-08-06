@@ -1,8 +1,5 @@
 -- ClosetAssistant Database Schema
--- Run this SQL in your Supabase SQL Editor
-
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
+-- Run this SQL in your Supabase SQL Editor (Fixed Version)
 
 -- Create clothing_items table
 CREATE TABLE clothing_items (
