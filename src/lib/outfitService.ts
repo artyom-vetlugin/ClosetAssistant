@@ -50,12 +50,47 @@ export class OutfitSuggestionService {
         throw new Error('INSUFFICIENT_ITEMS')
       }
 
-      // 4. Generate all possible combinations
+      // 4. Pre-filter items by season if specified
+      let seasonFilteredTops = tops
+      let seasonFilteredBottoms = bottoms
+      let seasonFilteredShoes = shoes
+      let seasonFilteredAccessories = accessories
+
+      if (seasonPreference) {
+        seasonFilteredTops = tops.filter(item => 
+          this.isSeasonAppropriate(item, seasonPreference)
+        )
+        seasonFilteredBottoms = bottoms.filter(item => 
+          this.isSeasonAppropriate(item, seasonPreference)
+        )
+        seasonFilteredShoes = shoes.filter(item => 
+          this.isSeasonAppropriate(item, seasonPreference)
+        )
+        seasonFilteredAccessories = accessories.filter(item => 
+          this.isSeasonAppropriate(item, seasonPreference)
+        )
+
+        // Check if we have enough items after filtering
+        if (seasonFilteredTops.length === 0 || 
+            seasonFilteredBottoms.length === 0 || 
+            seasonFilteredShoes.length === 0) {
+          
+          // Fallback: if strict filtering leaves us with nothing, 
+          // use all items but heavily penalize wrong season items
+          console.log(`Not enough ${seasonPreference} items, using all items with season penalties`)
+          seasonFilteredTops = tops
+          seasonFilteredBottoms = bottoms
+          seasonFilteredShoes = shoes
+          seasonFilteredAccessories = accessories
+        }
+      }
+
+      // 5. Generate combinations from filtered items
       const combinations: OutfitSuggestion[] = []
 
-      for (const top of tops) {
-        for (const bottom of bottoms) {
-          for (const shoe of shoes) {
+      for (const top of seasonFilteredTops) {
+        for (const bottom of seasonFilteredBottoms) {
+          for (const shoe of seasonFilteredShoes) {
             // Base outfit without accessories
             const baseOutfit = {
               id: uuidv4(),
@@ -66,8 +101,8 @@ export class OutfitSuggestionService {
             combinations.push(baseOutfit)
 
             // Add accessories if requested and available
-            if (includeAccessories && accessories.length > 0) {
-              for (const accessory of accessories.slice(0, 2)) { // Limit accessories
+            if (includeAccessories && seasonFilteredAccessories.length > 0) {
+              for (const accessory of seasonFilteredAccessories.slice(0, 2)) { // Limit accessories
                 combinations.push({
                   id: uuidv4(),
                   items: { top, bottom, shoes: shoe, accessory },
@@ -91,8 +126,9 @@ export class OutfitSuggestionService {
       })
 
       // 6. Filter, sort, and return best suggestions
+      const minScore = seasonPreference ? 65 : 60 // Higher threshold when season is specified
       return scoredOutfits
-        .filter(outfit => outfit.score >= 60) // Minimum quality threshold
+        .filter(outfit => outfit.score >= minScore)
         .sort((a, b) => b.score - a.score)
         .slice(0, maxSuggestions)
 
@@ -116,13 +152,13 @@ export class OutfitSuggestionService {
     let totalScore = 0
     const reasoning: string[] = []
 
-    // 1. Color Harmony Score (60% weight)
+    // 1. Color Harmony Score (45% weight)
     const colorScore = ColorHarmonyEngine.scoreColorCombination(
       top.color,
       bottom.color,
       shoes.color
     )
-    totalScore += colorScore * 0.6
+    totalScore += colorScore * 0.45
 
     // Add color reasoning
     const colorReasons = ColorHarmonyEngine.generateColorReasoning(
@@ -132,19 +168,28 @@ export class OutfitSuggestionService {
     )
     reasoning.push(...colorReasons)
 
-    // 2. Season Matching Score (25% weight)
+    // 2. Season Matching Score (40% weight - increased importance)
     if (seasonPreference) {
       const seasonScore = this.scoreSeasonMatch([top, bottom, shoes], seasonPreference)
-      totalScore += seasonScore * 0.25
+      totalScore += seasonScore * 0.4
 
-      if (seasonScore >= 80) {
+      // Check if any items are completely wrong for the season
+      const wrongSeasonItems = [top, bottom, shoes].filter(item => 
+        !this.isSeasonAppropriate(item, seasonPreference)
+      )
+      
+      if (wrongSeasonItems.length > 0) {
+        // Heavy penalty for wrong season items
+        totalScore -= 30 * wrongSeasonItems.length
+        reasoning.push(`⚠️ Some items not ideal for ${seasonPreference}`)
+      } else if (seasonScore >= 80) {
         reasoning.push(`Perfect for ${seasonPreference} weather`)
       } else if (seasonScore >= 50) {
         reasoning.push(`Suitable for ${seasonPreference}`)
       }
     } else {
       // No season preference, give neutral score
-      totalScore += 75 * 0.25
+      totalScore += 75 * 0.4
     }
 
     // 3. Variety/Balance Score (15% weight)
@@ -176,6 +221,38 @@ export class OutfitSuggestionService {
       score: Math.round(Math.max(0, Math.min(100, totalScore))),
       reasoning: reasoning.slice(0, 3) // Limit to top 3 reasons
     }
+  }
+
+  /**
+   * Check if an item is appropriate for a given season
+   */
+  private static isSeasonAppropriate(item: ClothingItem, targetSeason: string): boolean {
+    // Items tagged for all seasons are always appropriate
+    if (item.seasons.includes('all') || item.seasons.length >= 3) {
+      return true
+    }
+
+    // Item specifically tagged for this season
+    if (item.seasons.includes(targetSeason)) {
+      return true
+    }
+
+    // Adjacent seasons are somewhat appropriate
+    const adjacentSeasons: Record<string, string[]> = {
+      'spring': ['summer'], // Spring clothes work in early summer
+      'summer': ['spring'], // Summer clothes work in late spring  
+      'fall': ['winter'],   // Fall clothes work in early winter
+      'winter': ['fall']    // Winter clothes work in late fall
+    }
+
+    // Allow adjacent seasons but only if item has no strict season restrictions
+    if (item.seasons.length === 1) {
+      // Single-season items are strict - only allow exact match or adjacent
+      return adjacentSeasons[targetSeason]?.includes(item.seasons[0]) || false
+    }
+
+    // Multi-season items (but not all) - check if target season is included
+    return item.seasons.includes(targetSeason)
   }
 
   /**

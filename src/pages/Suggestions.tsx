@@ -32,7 +32,11 @@ const Suggestions = () => {
       setSuggestions(newSuggestions)
       
       if (newSuggestions.length === 0) {
-        setError('No good outfit combinations found. Try adding more items to your wardrobe!')
+        if (seasonFilter) {
+          setError(`No good ${seasonFilter} outfit combinations found. Try adding more ${seasonFilter} items to your wardrobe, or try a different season!`)
+        } else {
+          setError('No good outfit combinations found. Try adding more items to your wardrobe!')
+        }
       }
     } catch (err) {
       if (err instanceof Error) {
