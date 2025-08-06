@@ -22,23 +22,22 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       })
 
       console.log('🎥 SIMPLE: Camera stream obtained:', stream)
-
-      if (videoRef.current) {
-        const video = videoRef.current
-        streamRef.current = stream
-        
-        console.log('🎥 SIMPLE: Video element found:', videoRef.current)
-        console.log('🎥 SIMPLE: Setting video srcObject directly...')
-        video.srcObject = stream
-        
-        // Force show immediately - no waiting for events
-        console.log('🎥 SIMPLE: Forcing video display immediately')
-        setIsStreaming(true)
-        
-        console.log('🎥 SIMPLE: isStreaming state should now be true')
-      } else {
-        console.log('🎥 SIMPLE: ERROR - videoRef.current is null!')
-      }
+      
+      // Store stream and show video immediately
+      streamRef.current = stream
+      console.log('🎥 SIMPLE: Stored stream, forcing UI to show video')
+      setIsStreaming(true)
+      
+      // Wait for React to render the video element, then set the stream
+      setTimeout(() => {
+        console.log('🎥 SIMPLE: Checking for video element after render...')
+        if (videoRef.current) {
+          console.log('🎥 SIMPLE: Video element found after render, setting srcObject')
+          videoRef.current.srcObject = stream
+        } else {
+          console.log('🎥 SIMPLE: Still no video element after timeout!')
+        }
+      }, 100)
     } catch (err) {
       console.error('🎥 SIMPLE: Error accessing camera:', err)
       setError('Camera access failed: ' + err.message)
