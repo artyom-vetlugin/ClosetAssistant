@@ -33,15 +33,10 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       console.log('Camera stream obtained:', stream)
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream
+        const video = videoRef.current
         streamRef.current = stream
         
-        // Set up video element
-        const video = videoRef.current
-        video.srcObject = stream
-        video.autoplay = true
-        video.playsInline = true
-        video.muted = true
+        console.log('Setting up video element...')
         
         // Wait for video to start playing
         const handleVideoReady = () => {
@@ -49,35 +44,54 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           setIsStreaming(true)
         }
         
-        // Try multiple events to ensure video starts
+        // Set up event handlers BEFORE setting srcObject
         video.onloadedmetadata = () => {
-          console.log('Video metadata loaded')
+          console.log('Video metadata loaded, readyState:', video.readyState)
           video.play().then(() => {
             console.log('Video play() succeeded')
             handleVideoReady()
           }).catch(err => {
             console.error('Error playing video:', err)
-            // Sometimes metadata loads but play fails, try again
-            setTimeout(() => {
-              video.play().then(handleVideoReady).catch(console.error)
-            }, 100)
+            // Force show video even if play fails
+            handleVideoReady()
           })
         }
         
         video.oncanplay = () => {
-          console.log('Video can start playing')
+          console.log('Video can start playing, readyState:', video.readyState)
           if (!isStreaming) {
             handleVideoReady()
           }
         }
         
-        // Fallback timeout in case events don't fire
-        setTimeout(() => {
-          if (!isStreaming && video.readyState >= 2) {
-            console.log('Fallback: Video seems ready, forcing stream start')
+        video.onplaying = () => {
+          console.log('Video is now playing')
+          if (!isStreaming) {
             handleVideoReady()
           }
-        }, 2000)
+        }
+        
+        video.onerror = (err) => {
+          console.error('Video error:', err)
+        }
+        
+        // Set video properties
+        video.autoplay = true
+        video.playsInline = true
+        video.muted = true
+        
+        // Now set the stream - this should trigger the events
+        console.log('Setting video srcObject...')
+        video.srcObject = stream
+        
+        // Fallback timeout - force show after 1 second
+        setTimeout(() => {
+          console.log('Fallback timeout: current readyState:', video.readyState, 'isStreaming:', isStreaming)
+          if (!isStreaming) {
+            console.log('Forcing video display via timeout')
+            handleVideoReady()
+          }
+        }, 1000)
       }
     } catch (err) {
       console.error('Error accessing camera:', err)
