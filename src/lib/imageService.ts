@@ -51,7 +51,7 @@ export class ImageService {
       const filePath = `${userId}/${fileName}`
 
       // Upload to Supabase storage
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('clothing-images')
         .upload(filePath, compressedFile, {
           cacheControl: '3600',

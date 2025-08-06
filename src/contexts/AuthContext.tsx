@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
-import { AuthService, AuthState } from '../lib/auth'
+import type { User } from '@supabase/supabase-js'
+import { AuthService, type AuthState } from '../lib/auth'
 
 interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<void>

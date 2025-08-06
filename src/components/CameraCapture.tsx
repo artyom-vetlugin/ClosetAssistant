@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void
@@ -76,14 +76,12 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   }, [stopCamera, onCancel])
 
   // Start camera when component mounts
-  useState(() => {
+  useEffect(() => {
     startCamera()
-  })
-
-  // Cleanup on unmount
-  useState(() => {
+    
+    // Cleanup on unmount
     return () => stopCamera()
-  })
+  }, [startCamera, stopCamera])
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">

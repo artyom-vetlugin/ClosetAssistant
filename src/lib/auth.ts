@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { AuthError, User } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 
 export interface AuthState {
   user: User | null
@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   static onAuthStateChange(callback: (user: User | null) => void) {
-    return supabase.auth.onAuthStateChange((event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null)
     })
   }
