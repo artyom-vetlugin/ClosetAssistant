@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ClothingService, type ClothingItemFilters } from '../lib/clothingService'
 import type { ClothingItem } from '../lib/supabase'
+import ItemDetail from '../components/ItemDetail'
 
 const Wardrobe = () => {
   const location = useLocation()
   const [items, setItems] = useState<ClothingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null)
   const [message, setMessage] = useState('')
   const [filters, setFilters] = useState<ClothingItemFilters>({})
 
@@ -50,6 +52,26 @@ const Wardrobe = () => {
     return seasons.map(season => 
       season.charAt(0).toUpperCase() + season.slice(1)
     ).join(', ')
+  }
+
+  // Handle item update
+  const handleItemUpdate = (updatedItem: ClothingItem) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      )
+    )
+    setMessage('Item updated successfully!')
+    setTimeout(() => setMessage(''), 3000)
+  }
+
+  // Handle item delete
+  const handleItemDelete = (deletedItemId: string) => {
+    setItems(prevItems => 
+      prevItems.filter(item => item.id !== deletedItemId)
+    )
+    setMessage('Item deleted successfully!')
+    setTimeout(() => setMessage(''), 3000)
   }
 
   return (
@@ -157,7 +179,11 @@ const Wardrobe = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.length > 0 ? (
             items.map((item) => (
-              <div key={item.id} className="card p-0 overflow-hidden hover:shadow-md transition-shadow">
+              <div 
+                key={item.id} 
+                onClick={() => setSelectedItem(item)}
+                className="card p-0 overflow-hidden hover:shadow-lg transition-all cursor-pointer transform hover:scale-105"
+              >
                 <div className="aspect-square relative">
                   <img
                     src={item.image_url}
@@ -210,6 +236,16 @@ const Wardrobe = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Item Detail Modal */}
+      {selectedItem && (
+        <ItemDetail
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onUpdate={handleItemUpdate}
+          onDelete={handleItemDelete}
+        />
       )}
     </div>
   );

@@ -50,6 +50,16 @@
 - Given items exist, when I tap **Filters**, **then** I can apply any combination of Type/Color/Season and see only matching items.
 - Clearing filters resets the list.
 
+### 5.2b Edit & Delete Items
+
+**As a** user, **I want** to edit or delete items from my wardrobe **so that** I can keep my wardrobe organized and up-to-date.
+
+**Acceptance Criteria:**
+- Given an item exists, when I tap on it in **My Wardrobe**, **then** I can see item details with **Edit** and **Delete** options.
+- When I tap **Edit**, I can modify Type, Color, Season, and save changes (photo remains the same).
+- When I tap **Delete** with confirmation, the item is permanently removed from my wardrobe.
+- After edit/delete, I return to the wardrobe view with updated data.
+
 ### 5.3 Get Outfit Suggestions
 
 **As a** user, **I want** the app to suggest a few outfits from my items **so that** I can decide quickly.
@@ -156,7 +166,7 @@ Start with deterministic, readable rules:
 **Day 8-10: Wardrobe & Filtering**
 - Build "My Wardrobe" page with item grid
 - Add basic filtering (type, color)
-- Implement item editing/deletion
+- Implement item detail view with edit/delete options
 
 **Day 11-12: Basic Outfit Suggestions**
 - Create simple outfit combination logic
