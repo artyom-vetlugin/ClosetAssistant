@@ -45,11 +45,24 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   }, [])
 
   const stopCamera = useCallback(() => {
+    console.log('🎥 SIMPLE: Stopping camera...')
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
+      console.log('🎥 SIMPLE: Stopping all video tracks')
+      streamRef.current.getTracks().forEach(track => {
+        console.log('🎥 SIMPLE: Stopping track:', track.label)
+        track.stop()
+      })
       streamRef.current = null
     }
+    
+    // Clear video element
+    if (videoRef.current) {
+      console.log('🎥 SIMPLE: Clearing video srcObject')
+      videoRef.current.srcObject = null
+    }
+    
     setIsStreaming(false)
+    console.log('🎥 SIMPLE: Camera stopped')
   }, [])
 
   const capturePhoto = useCallback(() => {
@@ -89,8 +102,22 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   useEffect(() => {
     startCamera()
     
+    // Also stop camera when user leaves the page
+    const handleBeforeUnload = () => {
+      console.log('🎥 SIMPLE: Page unloading, stopping camera')
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
     // Cleanup on unmount
-    return () => stopCamera()
+    return () => {
+      console.log('🎥 SIMPLE: Component unmounting, stopping camera')
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      stopCamera()
+    }
   }, [startCamera, stopCamera])
 
   return (
