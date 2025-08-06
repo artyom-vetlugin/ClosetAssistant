@@ -20,6 +20,7 @@
 ### In
 - Add items: photo upload (camera or gallery) + **manual tags** (type, color, season).
 - Browse wardrobe by filters (type, color, season).
+- **Edit & delete items**: modify item details or remove items from wardrobe.
 - **Suggest outfits** using simple pairing rules (tops + bottoms + shoes; accessories optional).
 - Visual outfit builder: display items in a clean collage; **Save look**.
 - **Wear log**: "I wore this today" with date & saved outfit.
