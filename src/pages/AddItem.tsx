@@ -24,6 +24,7 @@ const AddItem = () => {
   const [error, setError] = useState('')
   const [detectedColor, setDetectedColor] = useState<string>('')
   const [colorDetectionLoading, setColorDetectionLoading] = useState(false)
+  const [shouldRemoveBg, setShouldRemoveBg] = useState(false)
 
   const handleFileSelect = async (file: File) => {
     const validation = ImageService.validateImageFile(file)
@@ -37,6 +38,7 @@ const AddItem = () => {
       ImageService.revokePreviewUrl(previewUrl)
     }
 
+    // Preview and detection use original image (no automatic background removal)
     setSelectedFile(file)
     setPreviewUrl(ImageService.createPreviewUrl(file))
     setError('')
@@ -102,8 +104,11 @@ const AddItem = () => {
       setLoading(true)
       setError('')
 
-      // Upload image to Supabase storage
-      const imageUrl = await ImageService.uploadImage(selectedFile, user.id)
+      // Upload image to Supabase storage with optional background removal
+      const imageUrl = await ImageService.uploadImage(selectedFile, user.id, {
+        removeBackground: shouldRemoveBg,
+        outputFormat: 'image/png',
+      })
 
       // Save clothing item to database
       await ClothingService.createItem({
@@ -231,6 +236,20 @@ const AddItem = () => {
                 <option value="shoes">Shoes</option>
                 <option value="accessory">Accessory</option>
               </select>
+            </div>
+
+            {/* Background removal toggle */}
+            <div className="flex items-center">
+              <input
+                id="remove-bg"
+                type="checkbox"
+                checked={shouldRemoveBg}
+                onChange={(e) => setShouldRemoveBg(e.target.checked)}
+                className="mr-2 text-primary-500 focus:ring-primary-500"
+              />
+              <label htmlFor="remove-bg" className="text-sm text-gray-700">
+                Remove background on upload
+              </label>
             </div>
 
             <div>

@@ -1,6 +1,7 @@
 import imageCompression from 'browser-image-compression'
 import { v4 as uuidv4 } from 'uuid'
 import { supabase } from './supabase'
+import { removeBackground as removeBg } from '@imgly/background-removal'
 
 // Color detection types
 interface ColorRange {
@@ -14,6 +15,8 @@ export interface ImageUploadOptions {
   maxSizeMB?: number
   maxWidthOrHeight?: number
   useWebWorker?: boolean
+  removeBackground?: boolean
+  outputFormat?: 'image/png' | 'image/webp'
 }
 
 export class ImageService {
@@ -21,6 +24,24 @@ export class ImageService {
     maxSizeMB: 1,
     maxWidthOrHeight: 800,
     useWebWorker: true,
+  }
+
+  /**
+   * Remove background from an image file and return a new File with alpha channel
+   */
+  static async removeBackground(
+    file: File,
+    format: 'image/png' | 'image/webp' = 'image/png'
+  ): Promise<File> {
+    try {
+      const blob = await removeBg(file, { output: { format } })
+      const ext = format === 'image/webp' ? 'webp' : 'png'
+      const newName = file.name.replace(/\.[^/.]+$/, '') + `.${ext}`
+      return new File([blob], newName, { type: format })
+    } catch (error) {
+      console.error('Error removing background:', error)
+      throw new Error('Failed to remove background')
+    }
   }
 
   /**
@@ -50,18 +71,30 @@ export class ImageService {
     options: ImageUploadOptions = {}
   ): Promise<string> {
     try {
-      // Compress the image first
+      // 1) Compress the image first
       const compressedFile = await this.compressImage(file, options)
-      
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${uuidv4()}.${fileExt}`
+
+      // 2) Optional background removal (keeps alpha)
+      const finalFile = options.removeBackground
+        ? await this.removeBackground(
+            compressedFile,
+            options.outputFormat ?? 'image/png'
+          )
+        : compressedFile
+
+      // 3) Generate a filename based on final file type
+      const inferredExt =
+        finalFile.type.includes('webp') ? 'webp' :
+        finalFile.type.includes('png') ? 'png' :
+        (finalFile.name.split('.').pop() || 'jpg')
+
+      const fileName = `${uuidv4()}.${inferredExt}`
       const filePath = `${userId}/${fileName}`
 
       // Upload to Supabase storage
       const { error } = await supabase.storage
         .from('clothing-images')
-        .upload(filePath, compressedFile, {
+        .upload(filePath, finalFile, {
           cacheControl: '3600',
           upsert: false
         })
