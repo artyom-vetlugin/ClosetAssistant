@@ -18,7 +18,7 @@
 ## 4. MVP Scope
 
 ### In
-- Add items: photo upload (camera or gallery) + **smart color detection** + manual tags (type, color, season).
+- Add items: photo upload (camera or gallery) + **smart color detection** + manual tags (type, color, season) + **optional background removal toggle** (uploads clipped image with transparent background when enabled).
 - Browse wardrobe by filters (type, color, season).
 - **Edit & delete items**: modify item details or remove items from wardrobe.
 - **Suggest outfits** using simple pairing rules (tops + bottoms + shoes; accessories optional).
@@ -41,6 +41,8 @@
 **Acceptance Criteria:**
 - Given I open **Add Item**, when I select/capture a photo, **then** the app automatically detects and suggests the primary color.
 - I can accept the detected color or manually select a different one from the dropdown.
+- I can toggle **Remove background** before saving; when enabled, the uploaded image is stored with the background removed (alpha PNG/WebP). When disabled, the original image is stored.
+- Preview and color detection are based on the original image (no background removal applied automatically during preview).
 - When I fill **Type, Color, Season**, **then** I can save the item.
 - If **Type/Color/Season** is missing, **then** the **Save** button is disabled and I see a short hint.
 - After save, I see a success toast and the new item appears in **My Wardrobe**.
@@ -139,7 +141,7 @@ Start with deterministic, readable rules:
 - **Backend & Auth & Storage: Supabase** (Postgres, Auth, Storage)
   - Why: You like SQL; easy row-level security; image storage out-of-the-box; free tier.
   - Alternative: Firebase if you prefer it—same architecture.
-- **Image Handling:** client-side compression (e.g., browser-image-compression) before upload.
+- **Image Handling:** client-side compression (e.g., browser-image-compression) before upload; **optional client-side background removal** using `@imgly/background-removal` (WASM) when user enables the toggle. Output stored as PNG/WebP to preserve transparency.
 - **State Management:** React Query (server state) + simple local component state.
 - **Deployment:** Vercel/Netlify for frontend; Supabase hosted.
 
@@ -184,7 +186,7 @@ Start with deterministic, readable rules:
 - Deploy to Vercel
 
 ### ✅ Completed Features (MVP Status)
-- ✅ **Add Items**: Photo upload + smart color detection + manual tags
+- ✅ **Add Items**: Photo upload + smart color detection + manual tags + optional background removal toggle
 - ✅ **Browse Wardrobe**: Grid view with type/color/season filters  
 - ✅ **Edit & Delete Items**: Full CRUD with item detail modal
 - ✅ **Outfit Suggestions**: Rule-based algorithm with color harmony + season matching
