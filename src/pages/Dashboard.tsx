@@ -25,7 +25,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome to ClosetAssistant
+          Welcome to Closet Assistant
         </h1>
         <p className="text-gray-600">
           Make faster outfit decisions with what you already own
