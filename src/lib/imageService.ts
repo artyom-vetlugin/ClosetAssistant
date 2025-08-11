@@ -27,6 +27,36 @@ export class ImageService {
   }
 
   /**
+   * Fetch an image URL and convert it into a File instance
+   */
+  static async fileFromUrl(imageUrl: string): Promise<File> {
+    try {
+      const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`)
+      }
+      const blob = await response.blob()
+
+      const url = new URL(imageUrl)
+      const lastSegment = url.pathname.split('/').pop() || 'image'
+      const inferredExt = blob.type.includes('webp')
+        ? 'webp'
+        : blob.type.includes('png')
+        ? 'png'
+        : blob.type.includes('jpeg') || blob.type.includes('jpg')
+        ? 'jpg'
+        : 'png'
+      const fileName = lastSegment.includes('.') ? lastSegment : `${lastSegment}.${inferredExt}`
+
+      const type = blob.type || (inferredExt === 'webp' ? 'image/webp' : inferredExt === 'png' ? 'image/png' : 'image/jpeg')
+      return new File([blob], fileName, { type })
+    } catch (error) {
+      console.error('Error converting URL to file:', error)
+      throw new Error('Failed to convert image URL to file')
+    }
+  }
+
+  /**
    * Remove background from an image file and return a new File with alpha channel
    */
   static async removeBackground(

@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import type { ClothingItem } from '../lib/supabase'
 import { ClothingService } from '../lib/clothingService'
+import { ImageService } from '../lib/imageService'
+import { useAuth } from '../contexts/AuthContext'
 
 interface ItemDetailProps {
   item: ClothingItem
@@ -14,9 +16,11 @@ const COLORS = ['black', 'white', 'gray', 'brown', 'red', 'blue', 'green', 'yell
 const SEASONS = ['spring', 'summer', 'fall', 'winter']
 
 export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDetailProps) {
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isRemovingBg, setIsRemovingBg] = useState(false)
   
   // Edit form state
   const [editData, setEditData] = useState({
@@ -63,6 +67,42 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
     }
   }
 
+  const handleRemoveBackground = async () => {
+    if (!user?.id) {
+      alert('You must be signed in to modify images')
+      return
+    }
+    setIsRemovingBg(true)
+    try {
+      const originalUrl = item.image_url
+      const file = await ImageService.fileFromUrl(originalUrl)
+      const bgRemovedFile = await ImageService.removeBackground(file, 'image/png')
+      const newImageUrl = await ImageService.uploadImage(bgRemovedFile, user.id, {
+        removeBackground: false,
+        outputFormat: 'image/png'
+      })
+
+      const updatedItem = await ClothingService.updateItem({
+        id: item.id,
+        image_url: newImageUrl
+      })
+
+      // Best-effort cleanup of old image
+      try {
+        await ImageService.deleteImage(originalUrl, user.id)
+      } catch (cleanupError) {
+        console.warn('Failed to delete old image:', cleanupError)
+      }
+
+      onUpdate(updatedItem)
+    } catch (error) {
+      console.error('Error removing background:', error)
+      alert('Failed to remove background')
+    } finally {
+      setIsRemovingBg(false)
+    }
+  }
+
   const toggleSeason = (season: string) => {
     setEditData(prev => ({
       ...prev,
@@ -95,6 +135,17 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
               alt="Clothing item"
               className="w-full h-48 object-cover rounded-lg"
             />
+            {isEditing && (
+              <div className="mt-2 flex">
+                <button
+                  onClick={handleRemoveBackground}
+                  disabled={isRemovingBg}
+                  className="btn-secondary disabled:opacity-50"
+                >
+                  {isRemovingBg ? 'Removing background...' : 'Remove background'}
+                </button>
+              </div>
+            )}
           </div>
 
           {!isEditing ? (
