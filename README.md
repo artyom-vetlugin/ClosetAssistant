@@ -1,5 +1,15 @@
 # React + TypeScript + Vite
 
+## Stack
+- React 19
+- TypeScript 5
+- Vite 7 (+ `@vitejs/plugin-react`)
+- React Router 7
+- Tailwind CSS 3 (PostCSS + Autoprefixer)
+- Supabase JS v2
+- Imaging: `browser-image-compression`, `@imgly/background-removal`
+- Tooling: ESLint 9, `typescript-eslint`
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
