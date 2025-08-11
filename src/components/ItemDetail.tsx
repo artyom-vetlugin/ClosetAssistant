@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { ClothingItem } from '../lib/supabase'
 import { ClothingService } from '../lib/clothingService'
 import { ImageService } from '../lib/imageService'
@@ -129,24 +129,24 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
         {/* Content */}
         <div className="p-4">
           {/* Image */}
-          <div className="mb-4">
+          <div className="mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center h-[45vh] md:h-[35vh]">
             <img
               src={item.image_url}
               alt="Clothing item"
-              className="w-full h-48 object-cover rounded-lg"
+              className="w-full h-full object-contain"
             />
-            {isEditing && (
-              <div className="mt-2 flex">
-                <button
-                  onClick={handleRemoveBackground}
-                  disabled={isRemovingBg}
-                  className="btn-secondary disabled:opacity-50"
-                >
-                  {isRemovingBg ? 'Removing background...' : 'Remove background'}
-                </button>
-              </div>
-            )}
           </div>
+          {isEditing && (
+            <div className="mb-4">
+              <button
+                onClick={handleRemoveBackground}
+                disabled={isRemovingBg}
+                className="btn-secondary disabled:opacity-50"
+              >
+                {isRemovingBg ? 'Removing background...' : 'Remove background'}
+              </button>
+            </div>
+          )}
 
           {!isEditing ? (
             /* View Mode */
@@ -207,7 +207,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                 <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
                 <select
                   value={editData.color}
-                  onChange={(e) => setEditData(prev => ({ ...prev, color: e.target.value }))}
+                  onChange={(e) => setEditData(prev => ({ ...prev, color: e.target.value as ClothingItem['color'] }))}
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {COLORS.map(color => (
