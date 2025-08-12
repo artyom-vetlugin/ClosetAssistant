@@ -9,6 +9,9 @@ const History = () => {
   const [logs, setLogs] = useState<WearLogWithOutfit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deletingId, setDeletingId] = useState<string>('')
+  const [editingId, setEditingId] = useState<string>('')
+  const [pendingDate, setPendingDate] = useState<Record<string, string>>({})
 
   useEffect(() => {
     ;(async () => {
@@ -41,6 +44,8 @@ const History = () => {
           {logs.map((log) => {
             const outfit = log.outfits
             const items = (outfit?.outfit_items ?? []).map((oi) => oi.clothing_items)
+            const isDeleting = deletingId === log.id
+            const isEditing = editingId === log.id
             return (
               <div key={log.id} className="card flex items-center gap-4">
                 <div className="w-24 shrink-0 grid grid-cols-3 gap-1">
@@ -50,8 +55,70 @@ const History = () => {
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold">{outfit?.name ?? 'Outfit'}</div>
-                  <div className="text-sm text-gray-600">{log.worn_date}</div>
+                  <div className="text-sm text-gray-600 flex items-center gap-2">
+                    {isEditing ? (
+                      <>
+                        <input
+                          type="date"
+                          className="input input-bordered input-sm"
+                          value={pendingDate[log.id] ?? log.worn_date}
+                          onChange={(e) =>
+                            setPendingDate((prev) => ({ ...prev, [log.id]: e.target.value }))
+                          }
+                        />
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={async () => {
+                            try {
+                              const newDate = (pendingDate[log.id] ?? log.worn_date) || log.worn_date
+                              setEditingId('')
+                              await WearLogService.updateWearLogDate(log.id, newDate)
+                              setLogs((prev) =>
+                                prev.map((l) => (l.id === log.id ? { ...l, worn_date: newDate } : l))
+                              )
+                            } catch {
+                              setError('Failed to update date')
+                            }
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => setEditingId('')}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <span
+                        className="cursor-pointer hover:underline hover:decoration-dotted"
+                        onClick={() => {
+                          setPendingDate((prev) => ({ ...prev, [log.id]: log.worn_date }))
+                          setEditingId(log.id)
+                        }}
+                      >
+                        {log.worn_date}
+                      </span>
+                    )}
+                  </div>
                 </div>
+                <button
+                  className={`btn btn-ghost text-red-600 ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
+                  onClick={async () => {
+                    try {
+                      setDeletingId(log.id)
+                      await WearLogService.deleteWearLog(log.id)
+                      setLogs((prev) => prev.filter((l) => l.id !== log.id))
+                    } catch (e) {
+                      setError('Failed to delete log')
+                    } finally {
+                      setDeletingId('')
+                    }
+                  }}
+                >
+                  {isDeleting ? 'Deleting…' : 'Delete'}
+                </button>
               </div>
             )
           })}

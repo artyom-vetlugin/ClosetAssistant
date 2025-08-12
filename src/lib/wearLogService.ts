@@ -13,6 +13,30 @@ export class WearLogService {
     if (error) throw error
   }
 
+  static async deleteWearLog(logId: string): Promise<void> {
+    const user = await supabase.auth.getUser()
+    if (!user.data.user) throw new Error('Not authenticated')
+    const { error } = await supabase
+      .from('wear_logs')
+      .delete()
+      .eq('id', logId)
+      .eq('user_id', user.data.user.id)
+
+    if (error) throw error
+  }
+
+  static async updateWearLogDate(logId: string, wornDate: string): Promise<void> {
+    const user = await supabase.auth.getUser()
+    if (!user.data.user) throw new Error('Not authenticated')
+    const { error } = await supabase
+      .from('wear_logs')
+      .update({ worn_date: wornDate })
+      .eq('id', logId)
+      .eq('user_id', user.data.user.id)
+
+    if (error) throw error
+  }
+
   static async getHistory(): Promise<Array<{
     id: string
     worn_date: string

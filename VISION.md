@@ -90,6 +90,8 @@
 **Acceptance Criteria:**
 - Tapping **I wore this** stores a log with today's date and outfit ID.
 - **History** shows a reverse-chronological list (date + outfit name).
+- In **History**, each log has a **Delete** action that immediately removes the log without confirmation.
+- In **History**, click the date to inline edit via a date picker; saving updates the entry immediately.
 
 ### 5.6 Basic Performance & Installability
 
