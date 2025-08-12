@@ -144,6 +144,7 @@ Start with deterministic, readable rules:
 - **Image Handling:** client-side compression (e.g., browser-image-compression) before upload; **optional client-side background removal** using `@imgly/background-removal` (WASM) when user enables the toggle. Output stored as PNG/WebP to preserve transparency.
 - **State Management:** React Query (server state) + simple local component state.
 - **Deployment:** Vercel/Netlify for frontend; Supabase hosted.
+ - **Testing:** Vitest + React Testing Library for unit/component tests; mock Supabase access in unit tests.
 
 > You'll be "browser + mobile" on day 1 via PWA. Later, if you want a true native app: reuse logic with Expo React Native v2.
 
@@ -178,6 +179,7 @@ Start with deterministic, readable rules:
 - ✅ Create outfit combination logic with color harmony rules
 - ✅ Build outfit display with score cards and reasoning
 - ✅ Add "Save Outfit" functionality with custom naming
+ - ✅ Add tests: color rules, suggestion service (mocked), OutfitCard interaction
 
 **Day 13-14: Polish & PWA**
 - Add PWA manifest and basic service worker
@@ -198,6 +200,7 @@ Start with deterministic, readable rules:
 - Outfit history page
 - Advanced filtering options
 - Enhanced suggestion rules (weather, occasion)
+ - Add Playwright E2E for auth/protected routes and happy-path flows
 
 ## 10. Success Metrics (MVP)
 

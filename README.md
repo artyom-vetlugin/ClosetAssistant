@@ -9,6 +9,7 @@
 - Supabase JS v2
 - Imaging: `browser-image-compression`, `@imgly/background-removal`
 - Tooling: ESLint 9, `typescript-eslint`
+- Testing: Vitest + React Testing Library + jsdom
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -48,6 +49,33 @@ export default tseslint.config([
   },
 ])
 ```
+
+## Testing
+
+This project uses Vitest with React Testing Library (jsdom) for fast unit/component tests.
+
+Scripts:
+
+```bash
+npm run test       # run once (CI-friendly)
+npm run test:watch # watch mode
+```
+
+Config lives in `vite.config.ts` under the `test` key. Test setup is in `src/test/setup.ts`.
+
+What’s currently covered:
+
+- Color rules engine: `src/lib/colorRules.test.ts`
+  - Neutral/bold classification, pairing, scoring, reasoning
+- Outfit suggestions service: `src/lib/outfitService.test.ts`
+  - Uses a mocked `ClothingService` to isolate Supabase; checks scoring threshold and insufficient items
+- UI interaction: `src/components/OutfitCard.test.tsx`
+  - Modal open/save flow using `@testing-library/user-event`
+
+Notes:
+
+- The Save dialog has accessible attributes (`role="dialog"`, `aria-labelledby`) to make testing and a11y better.
+- Keep service tests isolated from Supabase by mocking `ClothingService` rather than hitting the network.
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
