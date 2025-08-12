@@ -72,6 +72,28 @@ What’s currently covered:
 - UI interaction: `src/components/OutfitCard.test.tsx`
   - Modal open/save flow using `@testing-library/user-event`
 
+## Recent Enhancements
+
+- Variation rule in outfit suggestions: avoids items used in the last 3 wear logs to increase rotation and novelty
+- Storage cleanup: deleting a clothing item now best-effort removes its image from Supabase Storage to prevent orphans
+- PWA runtime caching: Supabase public storage images are cached via Workbox for faster loads and basic offline grids
+
+## PWA Notes
+
+`vite-plugin-pwa` is configured with:
+
+- `registerType: 'autoUpdate'`
+- Precache common assets via `globPatterns`
+- Runtime caching rule for Supabase public storage images (`clothing-images` bucket) using CacheFirst with 30-day expiration
+
+To update the service worker after changes:
+
+```bash
+npm run build && npm run preview
+```
+
+Visit the app, then check the Application tab in DevTools → Service Workers to confirm the new SW is active.
+
 Notes:
 
 - The Save dialog has accessible attributes (`role="dialog"`, `aria-labelledby`) to make testing and a11y better.

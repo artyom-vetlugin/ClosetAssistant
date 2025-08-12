@@ -205,6 +205,11 @@ Start with deterministic, readable rules:
 - Enhanced suggestion rules (weather, occasion)
 - Add Playwright E2E for auth/protected routes and happy-path flows
 
+### ✅ Updates (Post-MVP Enhancements)
+- Variation rule implemented: suggestions now penalize items used in the last 3 wear logs and reward fresh picks
+- Storage hygiene: item delete also removes the associated Supabase Storage image (best-effort)
+- PWA upgrade: runtime caching for Supabase public storage images for faster grids and limited offline support
+
 ## 10. Success Metrics (MVP)
 
 - **TTFS (Time-to-first-suggestion):** ≤ 60 seconds for a new user to add 3 items and see suggestions.

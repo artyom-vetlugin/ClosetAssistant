@@ -124,9 +124,10 @@ export class OutfitSuggestionService {
         }
       }
 
-      // 5. Score each combination
+      // 5. Score each combination (apply variation rule using last 3 wear logs)
+      const recentItemIds = await this.getRecentlyWornItemIds(3)
       const scoredOutfits = combinations.map(outfit => {
-        const scored = this.scoreOutfit(outfit, seasonPreference)
+        const scored = this.scoreOutfit(outfit, seasonPreference, recentItemIds)
         return {
           ...outfit,
           score: scored.score,
@@ -155,7 +156,8 @@ export class OutfitSuggestionService {
    */
   private static scoreOutfit(
     outfit: OutfitSuggestion,
-    seasonPreference?: string
+    seasonPreference?: string,
+    recentItemIds?: Set<string>
   ): { score: number; reasoning: string[] } {
     const { top, bottom, shoes, accessory } = outfit.items
     let totalScore = 0
@@ -209,7 +211,21 @@ export class OutfitSuggestionService {
       reasoning.push(`Good variety in clothing types`)
     }
 
-    // 4. Accessory bonus (if present)
+    // 4. Variation rule (prefer items not in last N wear logs)
+    if (recentItemIds && recentItemIds.size > 0) {
+      const recentlyUsedCount = [top, bottom, shoes].filter((i) => recentItemIds.has(i.id)).length
+      if (recentlyUsedCount === 0) {
+        totalScore += 10
+        reasoning.push('Fresh picks not worn recently')
+      } else {
+        totalScore -= recentlyUsedCount * 8
+        if (recentlyUsedCount >= 2) {
+          reasoning.push('Some items repeated from recent outfits')
+        }
+      }
+    }
+
+    // 5. Accessory bonus (if present)
     if (accessory) {
       // Small bonus for including accessories
       totalScore += 5
@@ -230,6 +246,49 @@ export class OutfitSuggestionService {
       score: Math.round(Math.max(0, Math.min(100, totalScore))),
       reasoning: reasoning.slice(0, 3) // Limit to top 3 reasons
     }
+  }
+
+  /**
+   * Get item IDs used in the last N wear logs for the current user
+   */
+  private static async getRecentlyWornItemIds(limit = 3): Promise<Set<string>> {
+    const recent = new Set<string>()
+    try {
+      const { data: logs, error } = await supabase
+        .from('wear_logs')
+        .select('outfit_id')
+        .order('worn_date', { ascending: false })
+        .limit(limit)
+
+      if (error || !logs) return recent
+
+      for (const row of logs as { outfit_id: string }[]) {
+        // Try new schema: outfit_items
+        const { data: oi, error: oiErr } = await supabase
+          .from('outfit_items')
+          .select('item_id')
+          .eq('outfit_id', row.outfit_id)
+        if (!oiErr && oi && oi.length) {
+          oi.forEach((x: { item_id: string }) => recent.add(x.item_id))
+          continue
+        }
+
+        // Fallback: legacy saved_outfits
+        const { data: legacy, error: legacyErr } = await supabase
+          .from('saved_outfits')
+          .select('item_ids')
+          .eq('id', row.outfit_id)
+          .single()
+
+        if (!legacyErr && (legacy as { item_ids?: string[] } | null)?.item_ids) {
+          ;((legacy as { item_ids?: string[] }).item_ids || []).forEach((id) => recent.add(id))
+        }
+      }
+    } catch {
+      // Best-effort only; ignore errors
+      return recent
+    }
+    return recent
   }
 
   /**

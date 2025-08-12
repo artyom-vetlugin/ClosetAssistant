@@ -22,6 +22,17 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
+        runtimeCaching: [
+          {
+            // Cache Supabase public storage images to improve performance/offline
+            urlPattern: /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/clothing-images\/.*/i,
+            handler: 'CacheFirst' as const,
+            options: {
+              cacheName: 'clothing-images',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
       },
     })
   ],

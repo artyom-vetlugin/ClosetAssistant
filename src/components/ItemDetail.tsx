@@ -56,6 +56,14 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
   const handleDelete = async () => {
     setIsLoading(true)
     try {
+      // Best-effort: remove image from storage first to avoid orphans
+      try {
+        if (user?.id) {
+          await ImageService.deleteImage(item.image_url, user.id)
+        }
+      } catch (e) {
+        console.warn('Image cleanup failed:', e)
+      }
       await ClothingService.deleteItem(item.id)
       onDelete(item.id)
       onClose()
