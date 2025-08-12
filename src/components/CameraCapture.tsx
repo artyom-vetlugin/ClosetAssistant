@@ -10,6 +10,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const startTimeoutRef = useRef<number | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string>('')
   const { t } = useTranslation(['camera'])
@@ -31,7 +32,11 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       setIsStreaming(true)
       
       // Wait for React to render the video element, then set the stream
-      setTimeout(() => {
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current)
+        startTimeoutRef.current = null
+      }
+      startTimeoutRef.current = window.setTimeout(() => {
         console.log('🎥 SIMPLE: Checking for video element after render...')
         if (videoRef.current) {
           console.log('🎥 SIMPLE: Video element found after render, setting srcObject')
@@ -48,71 +53,53 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   }, [])
 
   const stopCamera = useCallback(() => {
-    console.log('🎥 NUCLEAR: Starting aggressive camera shutdown...')
-    
+    // Cancel any pending start timers to avoid re-attaching stream after stop
+    if (startTimeoutRef.current) {
+      clearTimeout(startTimeoutRef.current)
+      startTimeoutRef.current = null
+    }
+
+    // Snapshot and null ref early to avoid races
+    const stream = streamRef.current
+    streamRef.current = null
+
     // Clear video element first
     if (videoRef.current) {
-      console.log('🎥 NUCLEAR: Pausing and clearing video')
-      videoRef.current.pause()
-      videoRef.current.srcObject = null
-      videoRef.current.load() // Force reload to clear buffer
-      // Additional video cleanup
-      videoRef.current.removeAttribute('src')
-      videoRef.current.removeAttribute('srcObject')
+      const v = videoRef.current
+      v.pause()
+      // Clear srcObject/src aggressively
+      try {
+        (v as HTMLVideoElement & { srcObject?: MediaStream | null }).srcObject = null
+      } catch {}
+      v.removeAttribute('src')
+      v.removeAttribute('srcObject')
+      v.src = ''
+      v.load()
+      // Force immediate DOM removal to help stubborn browsers release camera
+      try {
+        const parent = v.parentNode
+        if (parent) {
+          parent.removeChild(v)
+        }
+      } catch {}
     }
-    
-    if (streamRef.current) {
-      console.log('🎥 NUCLEAR: Stream has', streamRef.current.getTracks().length, 'tracks')
-      
-      // Stop each track multiple times with different methods
-      streamRef.current.getTracks().forEach((track, index) => {
-        console.log(`🎥 NUCLEAR: Stopping track ${index}:`, track.label, 'State:', track.readyState)
-        
-        // Method 1: Standard stop
-        track.stop()
-        
-        // Method 2: Disable then stop
+
+    if (stream) {
+      // Stop only video tracks (some browsers behave oddly with audio)
+      stream.getVideoTracks().forEach((track) => {
         track.enabled = false
         track.stop()
-        
-        // Method 3: Clone and stop (sometimes helps)
-        try {
-          const clonedTrack = track.clone()
-          clonedTrack.stop()
-        } catch (e) {
-          console.log('🎥 NUCLEAR: Could not clone track (this is OK):', e instanceof Error ? e.message : String(e))
-        }
-        
-        console.log(`🎥 NUCLEAR: Track ${index} final state:`, track.readyState)
       })
-      
-      streamRef.current = null
-    }
-    
-    setIsStreaming(false)
-    console.log('🎥 NUCLEAR: Basic cleanup complete, trying browser-level reset...')
-    
-    // Nuclear option: Try to request camera again to force release
-    setTimeout(async () => {
-      try {
-        console.log('🎥 NUCLEAR: Requesting camera to force release...')
-        const tempStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: 1, height: 1 } // Minimal request
-        })
-        console.log('🎥 NUCLEAR: Got temporary stream, immediately stopping...')
-        tempStream.getTracks().forEach(track => {
+      // As a fallback, stop any remaining tracks
+      stream.getTracks().forEach((track) => {
+        if (track.readyState !== 'ended') {
+          track.enabled = false
           track.stop()
-        })
-        console.log('🎥 NUCLEAR: Temporary stream stopped - this should force camera release')
-      } catch (e) {
-        console.log('🎥 NUCLEAR: Could not get temporary stream (this might be OK):', e instanceof Error ? e.message : String(e))
-      }
-    }, 100)
-    
-    // Double-check after longer delay
-    setTimeout(() => {
-      console.log('🎥 NUCLEAR: Final check - camera should be off now')
-    }, 2000)
+        }
+      })
+    }
+
+    setIsStreaming(false)
   }, [])
 
   const capturePhoto = useCallback(() => {
@@ -137,8 +124,9 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         const file = new File([blob], `photo-${Date.now()}.jpg`, {
           type: 'image/jpeg'
         })
-        onCapture(file)
+        // Stop camera first to immediately release hardware
         stopCamera()
+        onCapture(file)
       }
     }, 'image/jpeg', 0.8)
   }, [onCapture, stopCamera])
@@ -161,10 +149,17 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           track.stop()
         })
       }
-      // Try to get all active media streams and stop them
-      navigator.mediaDevices.getUserMedia({ video: false, audio: false }).catch(() => {
-        // This might help release camera resources
-      })
+      // Also clear any pending timer
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current)
+        startTimeoutRef.current = null
+      }
+    }
+    
+    // Mobile Safari reliability: stop camera on pagehide (background/close)
+    const handlePageHide = () => {
+      console.log('🎥 SIMPLE: Page hidden (pagehide), stopping camera')
+      stopCamera()
     }
     
     // Also try to stop camera when visibility changes
@@ -176,12 +171,20 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
     }
     
     window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('unload', handleBeforeUnload)
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('blur', handlePageHide)
+    window.addEventListener('popstate', handlePageHide)
     document.addEventListener('visibilitychange', handleVisibilityChange)
     
     // Cleanup on unmount
     return () => {
       console.log('🎥 SIMPLE: Component unmounting, AGGRESSIVE camera stop')
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('unload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('blur', handlePageHide)
+      window.removeEventListener('popstate', handlePageHide)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       
       // Force stop all tracks immediately
@@ -199,6 +202,10 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         videoRef.current.srcObject = null
         videoRef.current.load()
       }
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current)
+        startTimeoutRef.current = null
+      }
       
       stopCamera()
     }
@@ -207,23 +214,15 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center p-4 bg-black text-white">
+      <div className="grid grid-cols-3 items-center p-4 bg-black text-white">
         <button
           onClick={handleCancel}
           className="text-white hover:text-gray-300"
         >
           {t('camera:cancel')}
         </button>
-        <h2 className="text-lg font-semibold">{t('camera:takePhoto')}</h2>
-        <button
-          onClick={() => {
-            console.log('🎥 MANUAL: User clicked manual stop')
-            stopCamera()
-          }}
-          className="text-red-400 text-xs px-2 py-1 border border-red-400 rounded hover:bg-red-400 hover:text-black"
-        >
-          {t('camera:stopCamera')}
-        </button>
+        <h2 className="text-lg font-semibold justify-self-center">{t('camera:takePhoto')}</h2>
+        <div />
       </div>
 
       {/* Camera View */}
