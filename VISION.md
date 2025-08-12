@@ -24,6 +24,7 @@
 - **Suggest outfits** using simple pairing rules (tops + bottoms + shoes; accessories optional).
 - Visual outfit builder: display items in a clean collage; **Save look**.
 - **Wear log**: "I wore this today" with date & saved outfit.
+- **Localization (i18n)**: English and Russian interface, language switcher in the header, persisted choice in `localStorage` and `<html lang>` kept in sync.
 
 ### Out (Push to v2)
 - Deep AI (image segmentation, smart detection, social feeds).
@@ -145,6 +146,7 @@ Start with deterministic, readable rules:
   - Alternative: Firebase if you prefer it—same architecture.
 - **Image Handling:** client-side compression (e.g., browser-image-compression) before upload; **optional client-side background removal** using `@imgly/background-removal` (WASM) when user enables the toggle. Output stored as PNG/WebP to preserve transparency.
 - **State Management:** React Query (server state) + simple local component state.
+- **Internationalization:** `i18next` + `react-i18next` + `i18next-browser-languagedetector` with explicit namespaces (e.g., `common`, `dashboard`, `wardrobe`, `suggestions`, `saved`, `history`, `addItem`, `auth`, `itemDetail`, `outfitCard`, `camera`). Persist language in `localStorage`; default to browser language with fallback to English.
 - **Deployment:** Vercel/Netlify for frontend; Supabase hosted.
  - **Testing:** Vitest + React Testing Library for unit/component tests; mock Supabase access in unit tests.
 
@@ -211,6 +213,7 @@ Start with deterministic, readable rules:
 - Variation rule implemented: suggestions now penalize items used in the last 3 wear logs and reward fresh picks
 - Storage hygiene: item delete also removes the associated Supabase Storage image (best-effort)
 - PWA upgrade: runtime caching for Supabase public storage images for faster grids and limited offline support
+- i18n: Full interface localization to English and Russian, namespaced keys and a persistent language selector added.
 
 ## 10. Success Metrics (MVP)
 
@@ -279,3 +282,15 @@ Start with deterministic, readable rules:
 - **After performance testing:** Optimize image handling
 
 ---
+
+## 13. Localization & Internationalization
+
+- **Libraries**: `i18next`, `react-i18next`, `i18next-browser-languagedetector`.
+- **Supported languages**: English (`en`) and Russian (`ru`).
+- **Detection order**: `localStorage` → browser `navigator` → `<html lang>` → URL path/subdomain.
+- **Persistence**: Selected language stored in `localStorage`; on change, `<html lang>` attribute is updated.
+- **Namespaces**: `common` (shared), `nav`, `dashboard`, `wardrobe`, `suggestions`, `saved`, `history`, `addItem`, `auth`, `itemDetail`, `outfitCard`, `camera`.
+- **Usage**: Components call `t('namespace:key')` explicitly to avoid relying on a default namespace.
+- **Fallback**: `fallbackLng: 'en'` to render English if a key is missing.
+- **UI**: Language switcher (EN/RU) in the app header.
+- **Testing**: Tests import `src/i18n.ts` in setup; assertions accept EN/RU variants where text is language-dependent.
