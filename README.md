@@ -1,4 +1,38 @@
-# React + TypeScript + Vite
+# Closet Assistant
+
+Smart wardrobe manager with outfit suggestions, Supabase auth/storage, and PWA support.
+
+> Full backend setup and SQL: see `SUPABASE_SETUP.md` and `supabase-setup.sql`. See `VISION.md` for data model and roadmap.
+
+## Quickstart
+
+```bash
+npm i
+cp .env.example .env.local
+# fill VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env.local
+npm run dev
+```
+
+## Environment
+
+Create `.env.local` (copy from `.env.example`):
+
+```ini
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=public-anon-key
+```
+
+- Credentials are public anon (not service_role).
+- Storage bucket used: `clothing-images`.
+- See `SUPABASE_SETUP.md` for DB schema, auth redirects, and storage policies.
+
+## Features
+
+- Supabase auth + RLS-backed wardrobe data
+- Image upload with compression + optional background removal
+- Outfit suggestion engine with color rules and rotation
+- PWA (offline caching for public storage images)
+- Tests: color rules, outfit suggestions, core UI flows
 
 ## Stack
 - React 19
@@ -98,6 +132,31 @@ Notes:
 
 - The Save dialog has accessible attributes (`role="dialog"`, `aria-labelledby`) to make testing and a11y better.
 - Keep service tests isolated from Supabase by mocking `ClothingService` rather than hitting the network.
+
+## Scripts
+
+- `npm run dev` — start Vite dev server
+- `npm run build` — typecheck + production build
+- `npm run preview` — preview production build
+- `npm run lint` — run ESLint
+- `npm run test` — run Vitest (jsdom)
+- `npm run test:watch` — watch mode
+- `npm run test:coverage` — coverage
+
+## Requirements
+
+- Node >= 18.18
+
+## Deployment
+
+- Build: `npm run build` → output in `dist/`
+- Set env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- Configure SPA fallback (serve `index.html` for unknown routes)
+- PWA: service worker only activates on HTTPS and production builds
+
+## License
+
+MIT
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 

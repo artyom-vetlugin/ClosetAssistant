@@ -3,13 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": { "node": ">=18.18.0" },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --environment=jsdom",
-    "test:watch": "vitest --environment=jsdom"
+    "test:watch": "vitest --environment=jsdom",
+    "test:coverage": "vitest run --environment=jsdom --coverage"
   },
   "vitest": {
     "setupFiles": [
