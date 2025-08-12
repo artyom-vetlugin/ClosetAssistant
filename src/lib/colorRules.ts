@@ -11,14 +11,14 @@ export class ColorHarmonyEngine {
    * Check if a color is neutral
    */
   static isNeutral(color: string): boolean {
-    return NEUTRALS.includes(color.toLowerCase() as any)
+    return NEUTRALS.includes(color.toLowerCase() as (typeof NEUTRALS)[number])
   }
 
   /**
    * Check if a color is bold/non-neutral
    */
   static isBold(color: string): boolean {
-    return BOLD_COLORS.includes(color.toLowerCase() as any)
+    return BOLD_COLORS.includes(color.toLowerCase() as (typeof BOLD_COLORS)[number])
   }
 
   /**

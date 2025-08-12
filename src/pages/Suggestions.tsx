@@ -56,7 +56,7 @@ const Suggestions = () => {
   const handleSaveOutfit = async (outfit: OutfitSuggestion, customName?: string) => {
     try {
       await OutfitSuggestionService.saveOutfit(outfit, customName)
-      setMessage('Outfit saved successfully!')
+      setMessage('Outfit saved successfully! View it in Saved Outfits.')
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
       console.error('Error saving outfit:', error)
@@ -71,8 +71,9 @@ const Suggestions = () => {
 
       {/* Success/Error Messages */}
       {message && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
-          {message}
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded flex justify-between items-center">
+          <span>{message}</span>
+          <Link to="/saved" className="btn-secondary btn-sm">View Saved</Link>
         </div>
       )}
       

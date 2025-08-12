@@ -1,0 +1,13 @@
+{
+  "name": "Closet Assistant",
+  "short_name": "Closet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/logo.svg", "type": "image/svg+xml" }
+  ]
+}
+
+

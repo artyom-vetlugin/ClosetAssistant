@@ -12,6 +12,7 @@ const Navigation = () => {
     { path: '/wardrobe', label: 'Wardrobe', icon: '👗' },
     { path: '/add-item', label: 'Add', icon: '➕' },
     { path: '/suggestions', label: 'Suggest', icon: '✨' },
+    { path: '/saved', label: 'Saved', icon: '💾' },
     { path: '/history', label: 'History', icon: '📅' },
   ];
 

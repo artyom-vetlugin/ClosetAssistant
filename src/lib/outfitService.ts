@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { supabase } from './supabase'
 import { ClothingService } from './clothingService'
 import { ColorHarmonyEngine } from './colorRules'
-import type { ClothingItem, Outfit, OutfitItem, WearLog } from './supabase'
+import type { ClothingItem, Outfit, OutfitItem } from './supabase'
 
 export interface OutfitSuggestion {
   id: string
@@ -85,8 +85,9 @@ export class OutfitSuggestionService {
         }
       }
 
-      // 5. Generate combinations from filtered items
+      // 5. Generate combinations from filtered items (with de-duplication)
       const combinations: OutfitSuggestion[] = []
+      const seen = new Set<string>()
 
       for (const top of seasonFilteredTops) {
         for (const bottom of seasonFilteredBottoms) {
@@ -98,17 +99,25 @@ export class OutfitSuggestionService {
               score: 0,
               reasoning: []
             }
-            combinations.push(baseOutfit)
+            const keyBase = `${top.id}|${bottom.id}|${shoe.id}`
+            if (!seen.has(keyBase)) {
+              seen.add(keyBase)
+              combinations.push(baseOutfit)
+            }
 
             // Add accessories if requested and available
             if (includeAccessories && seasonFilteredAccessories.length > 0) {
               for (const accessory of seasonFilteredAccessories.slice(0, 2)) { // Limit accessories
-                combinations.push({
-                  id: uuidv4(),
-                  items: { top, bottom, shoes: shoe, accessory },
-                  score: 0,
-                  reasoning: []
-                })
+                const keyAcc = `${top.id}|${bottom.id}|${shoe.id}|${accessory.id}`
+                if (!seen.has(keyAcc)) {
+                  seen.add(keyAcc)
+                  combinations.push({
+                    id: uuidv4(),
+                    items: { top, bottom, shoes: shoe, accessory },
+                    score: 0,
+                    reasoning: []
+                  })
+                }
               }
             }
           }
@@ -332,18 +341,37 @@ export class OutfitSuggestionService {
       // Generate outfit name
       const name = customName || this.generateOutfitName(suggestion)
 
-      // 1. Create outfit record
+      // 1. Try new schema: outfits + outfit_items
       const { data: outfit, error: outfitError } = await supabase
         .from('outfits')
-        .insert({
-          user_id: user.data.user.id,
-          name
-        })
+        .insert({ user_id: user.data.user.id, name })
         .select()
         .single()
 
       if (outfitError) {
-        throw outfitError
+        // If table doesn't exist, fallback to legacy saved_outfits schema
+        const tableMissing = (outfitError as { code?: string; message?: string }).code === '42P01' || String((outfitError as { message?: string }).message || '').includes('outfits')
+        if (!tableMissing) {
+          throw outfitError
+        }
+
+        const itemIds = [
+          suggestion.items.top.id,
+          suggestion.items.bottom.id,
+          suggestion.items.shoes.id,
+          suggestion.items.accessory?.id,
+        ].filter(Boolean) as string[]
+
+        const { data: legacy, error: legacyError } = await supabase
+          .from('saved_outfits')
+          .insert({ user_id: user.data.user.id, name, item_ids: itemIds })
+          .select()
+          .single()
+
+        if (legacyError) throw legacyError
+        // Coerce legacy row to Outfit shape for return consistency
+        const row = legacy as unknown as { id: string; user_id: string; name: string; created_at: string }
+        return { id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at }
       }
 
       // 2. Create outfit_items records
@@ -456,14 +484,45 @@ export class OutfitSuggestionService {
         .order('created_at', { ascending: false })
 
       if (error) {
-        throw error
+        const tableMissing = (error as { code?: string; message?: string }).code === '42P01' || String((error as { message?: string }).message || '').includes('outfits')
+        if (!tableMissing) {
+          throw error
+        }
+
+        // Fallback to legacy saved_outfits schema
+        const { data: legacy, error: legacyError } = await supabase
+          .from('saved_outfits')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (legacyError) throw legacyError
+
+        const legacyOutfits = (legacy || []) as { id: string; user_id: string; name: string; created_at: string; item_ids: string[] }[]
+        const results: (Outfit & { items: ClothingItem[] })[] = []
+
+        for (const row of legacyOutfits) {
+          const ids = row.item_ids || []
+          const { data: items, error: itemsErr } = await supabase
+            .from('clothing_items')
+            .select('*')
+            .in('id', ids)
+          if (itemsErr) throw itemsErr
+          results.push({ id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at, items: (items || []) as ClothingItem[] })
+        }
+
+        return results
       }
 
-      // Transform the data structure
-      return (outfits || []).map(outfit => ({
-        ...outfit,
-        items: (outfit as any).outfit_items.map((oi: any) => oi.clothing_items)
-      }))
+      // Transform the data structure with explicit typing
+      interface OutfitWithItems extends Outfit {
+        outfit_items: { role: OutfitItem['role']; clothing_items: ClothingItem }[]
+      }
+
+      return ((outfits || []) as unknown as OutfitWithItems[]).map((o) => {
+        const { outfit_items, ...rest } = o
+        const items = outfit_items.map((oi) => oi.clothing_items)
+        return { ...(rest as Outfit), items }
+      })
 
     } catch (error) {
       console.error('Error fetching saved outfits:', error)

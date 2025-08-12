@@ -23,7 +23,7 @@ const Login = () => {
       setLoading(true)
       await signIn(email, password)
       navigate('/')
-    } catch (error) {
+    } catch {
       setError('Failed to sign in. Please check your credentials.')
     } finally {
       setLoading(false)

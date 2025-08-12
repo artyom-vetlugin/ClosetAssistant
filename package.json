@@ -8,8 +8,14 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --environment=jsdom",
+    "test:watch": "vitest --environment=jsdom"
+  },
+  "vitest": {
+    "setupFiles": [
+      "src/test/setup.ts"
+    ],
+    "css": true
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
@@ -40,6 +46,7 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
     "vite": "^7.0.4",
+    "vite-plugin-pwa": "^1.0.2",
     "vitest": "^3.2.4"
   }
 }

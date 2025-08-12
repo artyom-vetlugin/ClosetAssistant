@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import AddItem from './pages/AddItem';
 import Wardrobe from './pages/Wardrobe';
 import Suggestions from './pages/Suggestions';
+import SavedOutfits from './pages/SavedOutfits';
 import History from './pages/History';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -30,6 +31,7 @@ function App() {
                   <Route path="/wardrobe" element={<Wardrobe />} />
                   <Route path="/suggestions" element={<Suggestions />} />
                   <Route path="/history" element={<History />} />
+                  <Route path="/saved" element={<SavedOutfits />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" style="color: #ff5733;">
+  <title>ClosetAssistant Logo</title>
+  <desc>Minimalist stylish closet icon with a hanger inside. Transparent background, adaptive color via currentColor.</desc>
+  <g stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Closet cabinet -->
+    <rect x="32" y="24" width="192" height="200" rx="24"/>
+
+    <!-- Center seam (drawn before hanger so hanger appears on top) -->
+    <line x1="128" y1="24" x2="128" y2="224"/>
+
+    <!-- Door handles -->
+    <circle cx="116" cy="124" r="6" fill="currentColor" stroke="none"/>
+    <circle cx="140" cy="124" r="6" fill="currentColor" stroke="none"/>
+
+    <!-- Hanger silhouette -->
+    <!-- Hook -->
+    <path d="M136 54a8 8 0 0 0-16 0"/>
+    <line x1="128" y1="54" x2="128" y2="110"/>
+    <!-- Arms and bar -->
+    <path d="M72 148l56-38l56 38"/>
+    <line x1="72" y1="148" x2="184" y2="148"/>
+  </g>
+</svg>
+
+

@@ -191,16 +191,19 @@ Start with deterministic, readable rules:
 - ✅ **Add Items**: Photo upload + smart color detection + manual tags + optional background removal toggle
 - ✅ **Browse Wardrobe**: Grid view with type/color/season filters  
 - ✅ **Edit & Delete Items**: Full CRUD with item detail modal
-- ✅ **Outfit Suggestions**: Rule-based algorithm with color harmony + season matching
+- ✅ **Outfit Suggestions**: Rule-based algorithm with color harmony + season matching (with de-duplication)
 - ✅ **Save Outfits**: Custom naming with auto-generation fallback
 - ✅ **Visual Outfit Cards**: 3-item grid with scoring and reasoning
+- ✅ **Saved Outfits Page**: View saved looks and mark "I wore this today"
+- ✅ **Wear Logs + History**: Log worn outfits and browse reverse-chronologically
+- ✅ **PWA (Basic)**: Manifest + service worker for install prompt and offline shell
 
 ### 🚧 Next: Optional Extensions
-- Wear logging integration
-- Outfit history page
+- Improve PWA with `vite-plugin-pwa` (precache, versioning, icon set)
+- Outfit history filters/search; streaks/usage analytics
 - Advanced filtering options
 - Enhanced suggestion rules (weather, occasion)
- - Add Playwright E2E for auth/protected routes and happy-path flows
+- Add Playwright E2E for auth/protected routes and happy-path flows
 
 ## 10. Success Metrics (MVP)
 

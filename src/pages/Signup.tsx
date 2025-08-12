@@ -35,7 +35,7 @@ const Signup = () => {
       setLoading(true)
       await signUp(email, password)
       setSuccess(true)
-    } catch (error) {
+    } catch {
       setError('Failed to create account. Please try again.')
     } finally {
       setLoading(false)

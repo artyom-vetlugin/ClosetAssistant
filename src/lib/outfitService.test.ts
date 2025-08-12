@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OutfitSuggestionService } from './outfitService'
+import type { ClothingItem } from './supabase'
 import { ClothingService } from './clothingService'
 
 const defaultItems = [
@@ -13,7 +14,7 @@ let getItemsSpy: ReturnType<typeof vi.spyOn> | undefined
 
 beforeEach(() => {
   getItemsSpy?.mockRestore()
-  getItemsSpy = vi.spyOn(ClothingService, 'getItems').mockResolvedValue(defaultItems as any)
+  getItemsSpy = vi.spyOn(ClothingService, 'getItems').mockResolvedValue(defaultItems as ClothingItem[])
 })
 
 describe('OutfitSuggestionService.generateSuggestions', () => {
@@ -34,7 +35,7 @@ describe('OutfitSuggestionService.generateSuggestions', () => {
   })
 
   it('throws INSUFFICIENT_ITEMS when a category is missing', async () => {
-    ;(getItemsSpy as any).mockResolvedValueOnce([
+    ;(getItemsSpy as unknown as { mockResolvedValueOnce: (v: ClothingItem[]) => void }).mockResolvedValueOnce([
       { id: 't1', type: 'top', color: 'blue', seasons: ['summer'], image_url: '', user_id: '', created_at: '', updated_at: '' },
     ])
     await expect(
