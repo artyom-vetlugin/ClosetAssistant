@@ -36,6 +36,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 3. Paste and click **Run**
 4. Verify tables were created in **Table Editor**
 5. Should show "Success. No rows returned" when complete
+6. Color enum includes: `black, white, gray, blue, red, green, yellow, pink, purple, brown, orange, beige, navy`
 
 ### 6. Configure Authentication
 1. Go to **Authentication** → **Settings**

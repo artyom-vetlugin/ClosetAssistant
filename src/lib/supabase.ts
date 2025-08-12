@@ -18,7 +18,7 @@ export interface ClothingItem {
   id: string
   user_id: string
   type: 'top' | 'bottom' | 'dress' | 'outerwear' | 'shoes' | 'accessory'
-  color: 'black' | 'white' | 'gray' | 'blue' | 'red' | 'green' | 'yellow' | 'pink' | 'purple' | 'brown' | 'orange'
+  color: 'black' | 'white' | 'gray' | 'blue' | 'red' | 'green' | 'yellow' | 'pink' | 'purple' | 'brown' | 'orange' | 'beige' | 'navy'
   seasons: string[] // ['spring', 'summer', 'fall', 'winter']
   image_url: string
   created_at: string

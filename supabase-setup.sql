@@ -6,7 +6,7 @@ CREATE TABLE clothing_items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('top', 'bottom', 'dress', 'outerwear', 'shoes', 'accessory')),
-  color TEXT NOT NULL CHECK (color IN ('black', 'white', 'gray', 'blue', 'red', 'green', 'yellow', 'pink', 'purple', 'brown', 'orange')),
+  color TEXT NOT NULL CHECK (color IN ('black', 'white', 'gray', 'blue', 'red', 'green', 'yellow', 'pink', 'purple', 'brown', 'orange', 'beige', 'navy')),
   seasons TEXT[] NOT NULL DEFAULT '{}', -- ['spring', 'summer', 'fall', 'winter']
   image_url TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
