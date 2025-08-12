@@ -1,19 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Navigation = () => {
   const location = useLocation();
+  const { t } = useTranslation('nav');
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   const navItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/wardrobe', label: 'Wardrobe', icon: '👗' },
-    { path: '/add-item', label: 'Add', icon: '➕' },
-    { path: '/suggestions', label: 'Suggest', icon: '✨' },
-    { path: '/saved', label: 'Saved', icon: '💾' },
-    { path: '/history', label: 'History', icon: '📅' },
+    { path: '/', label: t('home'), icon: '🏠' },
+    { path: '/wardrobe', label: t('wardrobe'), icon: '👗' },
+    { path: '/add-item', label: t('add'), icon: '➕' },
+    { path: '/suggestions', label: t('suggest'), icon: '✨' },
+    { path: '/saved', label: t('saved'), icon: '💾' },
+    { path: '/history', label: t('history'), icon: '📅' },
   ];
 
   return (

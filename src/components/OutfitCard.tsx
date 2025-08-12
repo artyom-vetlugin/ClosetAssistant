@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { OutfitSuggestion } from '../lib/outfitService'
+import { useTranslation } from 'react-i18next'
 
 interface OutfitCardProps {
   outfit: OutfitSuggestion
@@ -12,6 +13,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [customName, setCustomName] = useState('')
   const [saving, setSaving] = useState(false)
+  const { t } = useTranslation(['outfitCard', 'common'])
 
   const handleSaveClick = () => {
     setShowSaveDialog(true)
@@ -43,10 +45,10 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
   }
 
   const getScoreLabel = (score: number) => {
-    if (score >= 85) return 'Excellent'
-    if (score >= 70) return 'Good'
-    if (score >= 60) return 'Okay'
-    return 'Poor'
+    if (score >= 85) return t('outfitCard:excellent')
+    if (score >= 70) return t('outfitCard:good')
+    if (score >= 60) return t('outfitCard:okay')
+    return t('outfitCard:poor')
   }
 
   return (
@@ -70,7 +72,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
               loading="lazy"
             />
             <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-              Top
+              {t('common:types.top')}
             </div>
           </div>
 
@@ -83,7 +85,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
               loading="lazy"
             />
             <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-              Bottom
+              {t('common:types.bottom')}
             </div>
           </div>
 
@@ -96,7 +98,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
               loading="lazy"
             />
             <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-              Shoes
+              {t('common:types.shoes')}
             </div>
           </div>
         </div>
@@ -120,8 +122,8 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
 
         {/* Color Summary */}
         <div className="mb-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-medium">Colors:</span>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="font-medium">{t('outfitCard:colors')}</span>
             <div className="flex gap-1">
               <span className="px-2 py-1 bg-gray-100 rounded text-xs capitalize">
                 {outfit.items.top.color}
@@ -139,7 +141,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
         {/* Reasoning */}
         {outfit.reasoning.length > 0 && (
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Why this works:</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-1">{t('outfitCard:whyWorks')}</h4>
             <ul className="text-xs text-gray-600 space-y-1">
               {outfit.reasoning.map((reason, index) => (
                 <li key={index} className="flex items-start">
@@ -158,7 +160,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
               onClick={handleViewClick}
               className="flex-1 btn-secondary text-sm py-2"
             >
-              View Details
+              {t('outfitCard:viewDetails')}
             </button>
           )}
           <button
@@ -166,7 +168,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
             disabled={isSaving || saving}
             className="flex-1 btn-primary text-sm py-2 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Look'}
+            {saving ? t('outfitCard:saving') : t('outfitCard:saveLook')}
           </button>
         </div>
       </div>
@@ -175,17 +177,17 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
       {showSaveDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full" role="dialog" aria-modal="true" aria-labelledby="save-outfit-title">
-            <h3 id="save-outfit-title" className="text-lg font-semibold mb-4">Save Outfit</h3>
+            <h3 id="save-outfit-title" className="text-lg font-semibold mb-4">{t('outfitCard:saveOutfit')}</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Outfit Name (optional)
+                {t('outfitCard:nameOptional')}
               </label>
               <input
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Leave empty for auto-generated name"
+                placeholder={t('outfitCard:placeholder')}
                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -199,14 +201,14 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
                 disabled={saving}
                 className="flex-1 btn-secondary"
               >
-                Cancel
+                {t('common:cancel')}
               </button>
               <button
                 onClick={handleSaveConfirm}
                 disabled={saving}
                 className="flex-1 btn-primary disabled:opacity-50"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t('outfitCard:saving') : t('common:save')}
               </button>
             </div>
           </div>

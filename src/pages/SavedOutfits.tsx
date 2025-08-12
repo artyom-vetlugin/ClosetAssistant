@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { OutfitSuggestionService } from '../lib/outfitService'
 import { WearLogService } from '../lib/wearLogService'
 import type { ClothingItem, Outfit } from '../lib/supabase'
+import { useTranslation } from 'react-i18next'
 
 const SavedOutfits = () => {
   const [outfits, setOutfits] = useState<(Outfit & { items: ClothingItem[] })[]>([])
@@ -13,6 +14,7 @@ const SavedOutfits = () => {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [wearSavingId, setWearSavingId] = useState<string | null>(null)
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
+  const { t } = useTranslation(['saved'])
 
   const load = async () => {
     setLoading(true)
@@ -20,7 +22,7 @@ const SavedOutfits = () => {
       const res = await OutfitSuggestionService.getSavedOutfits()
       setOutfits(res)
     } catch {
-      setError('Failed to load saved outfits')
+      setError(t('saved:failedLoad', { defaultValue: 'Failed to load saved outfits' }))
     } finally {
       setLoading(false)
     }
@@ -33,10 +35,10 @@ const SavedOutfits = () => {
   const wearToday = async (outfitId: string) => {
     try {
       await WearLogService.logWear(outfitId)
-      setMessage('Logged for today')
+      setMessage(t('saved:loggedToday'))
       setTimeout(() => setMessage(''), 2000)
     } catch {
-      setError('Failed to log wear')
+      setError(t('saved:failedLogWear'))
       setTimeout(() => setError(''), 2500)
     }
   }
@@ -46,17 +48,17 @@ const SavedOutfits = () => {
     setWearSavingId(outfitId)
     try {
       await WearLogService.logWear(outfitId, wornDate)
-      setMessage(`Logged for ${wornDate}`)
+      setMessage(t('saved:loggedFor', { date: wornDate }))
       setTimeout(() => setMessage(''), 2000)
     } catch {
-      setError('Failed to log wear')
+      setError(t('saved:failedLogWear'))
       setTimeout(() => setError(''), 2500)
     } finally {
       setWearSavingId(null)
     }
   }
 
-  if (loading) return <div className="py-12 text-center text-gray-600">Loading...</div>
+  if (loading) return <div className="py-12 text-center text-gray-600">{t('saved:loading')}</div>
 
   const startEditing = (outfit: Outfit) => {
     setEditingId(outfit.id)
@@ -84,10 +86,10 @@ const SavedOutfits = () => {
     setOutfits((prev) => prev.map((o) => (o.id === id ? { ...o, name: newName } : o)))
     try {
       await OutfitSuggestionService.renameOutfit(id, newName)
-      setMessage('Name updated')
+      setMessage(t('saved:nameUpdated'))
       setTimeout(() => setMessage(''), 1500)
     } catch {
-      setError('Failed to rename outfit')
+      setError(t('saved:failedRename'))
       // revert
       setOutfits((prev) => prev.map((o) => (o.id === id ? { ...o, name: oldName } : o)))
       setTimeout(() => setError(''), 2500)
@@ -108,13 +110,13 @@ const SavedOutfits = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Saved Outfits</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('saved:title')}</h1>
       {message && <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">{message}</div>}
       {error && <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">{error}</div>}
       {outfits.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🧰</div>
-          <div className="text-gray-600">No saved outfits yet.</div>
+          <div className="text-gray-600">{t('saved:empty')}</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -142,20 +144,20 @@ const SavedOutfits = () => {
                     <button
                       type="button"
                       className="font-semibold text-left hover:underline"
-                      title="Click to rename"
+                      title={t('saved:clickToRename')}
                       onClick={() => startEditing(o)}
                       disabled={savingId === o.id}
                     >
-                      {savingId === o.id ? 'Saving…' : o.name}
+                      {savingId === o.id ? t('saved:saving') : o.name}
                     </button>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-primary flex-1" onClick={() => wearToday(o.id)} disabled={wearSavingId === o.id}>
-                    {wearSavingId === o.id ? 'Saving…' : 'I wore this today'}
+                    {wearSavingId === o.id ? t('saved:saving') : t('saved:woreToday')}
                   </button>
                   <details className="flex-1">
-                    <summary className="btn-secondary w-full">Details</summary>
+                    <summary className="btn-secondary w-full">{t('saved:details')}</summary>
                     <div className="mt-3 text-sm text-gray-700">
                       <div className="grid grid-cols-3 gap-2">
                         {items.map((it) => (
@@ -167,7 +169,7 @@ const SavedOutfits = () => {
                         ))}
                       </div>
                       <div className="mt-3 space-y-2">
-                        <label className="block text-xs text-gray-600">Select date</label>
+                        <label className="block text-xs text-gray-600">{t('saved:selectDate')}</label>
                         <div className="flex gap-2 items-center">
                           <input
                             type="date"
@@ -181,7 +183,7 @@ const SavedOutfits = () => {
                             onClick={() => logWearWithDate(o.id, wearDateByOutfit[o.id])}
                             disabled={wearSavingId === o.id}
                           >
-                            {wearSavingId === o.id ? 'Saving…' : 'Log wear'}
+                            {wearSavingId === o.id ? t('saved:saving') : t('saved:logWear')}
                           </button>
                         </div>
                       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { WearLogService } from '../lib/wearLogService'
 import type { ClothingItem, Outfit } from '../lib/supabase'
+import { useTranslation } from 'react-i18next'
 
 const History = () => {
   type OutfitItemJoin = { role: 'top' | 'bottom' | 'shoes' | 'accessory'; clothing_items: ClothingItem }
@@ -12,6 +13,7 @@ const History = () => {
   const [deletingId, setDeletingId] = useState<string>('')
   const [editingId, setEditingId] = useState<string>('')
   const [pendingDate, setPendingDate] = useState<Record<string, string>>({})
+  const { t } = useTranslation(['history'])
 
   const sortLogsByDateDesc = (arr: WearLogWithOutfit[]) =>
     [...arr].sort((a, b) => b.worn_date.localeCompare(a.worn_date))
@@ -22,25 +24,25 @@ const History = () => {
         const res = await WearLogService.getHistory()
         setLogs(sortLogsByDateDesc(res as unknown as WearLogWithOutfit[]))
       } catch {
-        setError('Failed to load history')
+        setError(t('history:failedLoad'))
       } finally {
         setLoading(false)
       }
     })()
   }, [])
 
-  if (loading) return <div className="py-12 text-center text-gray-600">Loading...</div>
+  if (loading) return <div className="py-12 text-center text-gray-600">{t('history:loading')}</div>
   if (error) return <div className="py-12 text-center text-red-700">{error}</div>
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Wear History</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t('history:title')}</h1>
 
       {logs.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📅</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No wear history yet</h3>
-          <p className="text-gray-600 mb-4">Start tracking your outfits to see your wear patterns</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('history:emptyTitle')}</h3>
+          <p className="text-gray-600 mb-4">{t('history:emptyText')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -82,17 +84,17 @@ const History = () => {
                                 )
                               )
                             } catch {
-                              setError('Failed to update date')
+                              setError(t('history:failedUpdateDate'))
                             }
                           }}
                         >
-                          Save
+                          {t('history:save')}
                         </button>
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => setEditingId('')}
                         >
-                          Cancel
+                          {t('history:cancel')}
                         </button>
                       </>
                     ) : (
@@ -116,13 +118,13 @@ const History = () => {
                       await WearLogService.deleteWearLog(log.id)
                       setLogs((prev) => prev.filter((l) => l.id !== log.id))
                     } catch (e) {
-                      setError('Failed to delete log')
+                      setError(t('history:failedDelete'))
                     } finally {
                       setDeletingId('')
                     }
                   }}
                 >
-                  {isDeleting ? 'Deleting…' : 'Delete'}
+                  {isDeleting ? t('history:deleting') : t('history:delete')}
                 </button>
               </div>
             )

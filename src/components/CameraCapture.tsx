@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void
@@ -11,6 +12,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   const streamRef = useRef<MediaStream | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string>('')
+  const { t } = useTranslation(['camera'])
 
   const startCamera = useCallback(async () => {
     try {
@@ -40,7 +42,8 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       }, 100)
     } catch (err) {
       console.error('🎥 SIMPLE: Error accessing camera:', err)
-      setError('Camera access failed: ' + (err instanceof Error ? err.message : String(err)))
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(t('camera:accessFailed', { message: msg }))
     }
   }, [])
 
@@ -209,9 +212,9 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           onClick={handleCancel}
           className="text-white hover:text-gray-300"
         >
-          Cancel
+          {t('camera:cancel')}
         </button>
-        <h2 className="text-lg font-semibold">Take Photo</h2>
+        <h2 className="text-lg font-semibold">{t('camera:takePhoto')}</h2>
         <button
           onClick={() => {
             console.log('🎥 MANUAL: User clicked manual stop')
@@ -219,7 +222,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
           }}
           className="text-red-400 text-xs px-2 py-1 border border-red-400 rounded hover:bg-red-400 hover:text-black"
         >
-          Stop Camera
+          {t('camera:stopCamera')}
         </button>
       </div>
 
@@ -233,7 +236,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
               onClick={startCamera}
               className="bg-primary-500 text-white px-6 py-2 rounded-lg"
             >
-              Try Again
+              {t('camera:tryAgain')}
             </button>
           </div>
         ) : isStreaming ? (
@@ -249,7 +252,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         ) : (
           <div className="text-center text-white">
             <div className="text-4xl mb-4">📷</div>
-            <p>Starting camera...</p>
+            <p>{t('camera:starting')}</p>
           </div>
         )}
       </div>

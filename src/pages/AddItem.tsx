@@ -5,11 +5,13 @@ import { ImageService } from '../lib/imageService'
 import { ClothingService } from '../lib/clothingService'
 import CameraCapture from '../components/CameraCapture'
 import type { ClothingItem } from '../lib/supabase'
+import { useTranslation } from 'react-i18next'
 
 const AddItem = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useTranslation(['addItem', 'common'])
   
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -29,7 +31,7 @@ const AddItem = () => {
   const handleFileSelect = async (file: File) => {
     const validation = ImageService.validateImageFile(file)
     if (!validation.isValid) {
-      setError(validation.error || 'Invalid file')
+      setError(validation.error || t('addItem:invalidFile'))
       return
     }
 
@@ -86,17 +88,17 @@ const AddItem = () => {
     e.preventDefault()
     
     if (!selectedFile) {
-      setError('Please select a photo')
+      setError(t('addItem:selectPhoto'))
       return
     }
 
     if (!user) {
-      setError('You must be logged in to add items')
+      setError(t('addItem:mustLogin'))
       return
     }
 
     if (seasons.length === 0) {
-      setError('Please select at least one season')
+      setError(t('addItem:selectSeason'))
       return
     }
 
@@ -124,11 +126,11 @@ const AddItem = () => {
       }
       
       navigate('/wardrobe', { 
-        state: { message: 'Item added successfully!' }
+        state: { message: t('addItem:addedSuccess') }
       })
     } catch (err) {
       console.error('Error adding item:', err)
-      setError('Failed to add item. Please try again.')
+      setError(t('addItem:failedAdd'))
     } finally {
       setLoading(false)
     }
@@ -154,7 +156,7 @@ const AddItem = () => {
 
   return (
     <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Item</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('addItem:title')}</h1>
       
       <form onSubmit={handleSubmit}>
         <div className="card">
@@ -168,7 +170,7 @@ const AddItem = () => {
             {/* Photo Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Photo *
+                {t('addItem:photoLabel')}
               </label>
               
               {selectedFile && previewUrl ? (
@@ -189,21 +191,21 @@ const AddItem = () => {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <div className="text-4xl mb-2">📸</div>
-                  <p className="text-gray-600 mb-4">Take a photo or upload from gallery</p>
+                  <p className="text-gray-600 mb-4">{t('addItem:photoHelp')}</p>
                   <div className="space-y-2">
                     <button
                       type="button"
                       onClick={() => setShowCamera(true)}
                       className="btn-primary w-full"
                     >
-                      Take Photo
+                      {t('addItem:takePhoto')}
                     </button>
                     <button
                       type="button"
                       onClick={handleGallerySelect}
                       className="btn-secondary w-full"
                     >
-                      Upload from Gallery
+                      {t('addItem:uploadFromGallery')}
                     </button>
                   </div>
                 </div>
@@ -220,21 +222,21 @@ const AddItem = () => {
 
             {/* Item Details */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Type *
-              </label>
+               <label className="block text-sm font-medium text-gray-700 mb-2">
+                 {t('addItem:typeLabel')}
+               </label>
               <select 
                 value={type}
                 onChange={(e) => setType(e.target.value as ClothingItem['type'])}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 required
               >
-                <option value="top">Top</option>
-                <option value="bottom">Bottom</option>
-                <option value="dress">Dress</option>
-                <option value="outerwear">Outerwear</option>
-                <option value="shoes">Shoes</option>
-                <option value="accessory">Accessory</option>
+                 <option value="top">{t('common:types.top')}</option>
+                 <option value="bottom">{t('common:types.bottom')}</option>
+                 <option value="dress">{t('common:types.dress')}</option>
+                 <option value="outerwear">{t('common:types.outerwear')}</option>
+                 <option value="shoes">{t('common:types.shoes')}</option>
+                 <option value="accessory">{t('common:types.accessory')}</option>
               </select>
             </div>
 
@@ -248,50 +250,50 @@ const AddItem = () => {
                 className="mr-2 text-primary-500 focus:ring-primary-500"
               />
               <label htmlFor="remove-bg" className="text-sm text-gray-700">
-                Remove background on upload
+                {t('addItem:removeBg')}
               </label>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Color *
-                {colorDetectionLoading && (
-                  <span className="ml-2 text-sm text-blue-600">🎨 Detecting color...</span>
-                )}
-                {detectedColor && !colorDetectionLoading && (
-                  <span className="ml-2 text-sm text-green-600">✨ Auto-detected: {detectedColor}</span>
-                )}
-              </label>
+               <label className="block text-sm font-medium text-gray-700 mb-2">
+                 {t('addItem:colorLabel')}
+                 {colorDetectionLoading && (
+                   <span className="ml-2 text-sm text-blue-600">🎨 {t('addItem:detectingColor')}</span>
+                 )}
+                 {detectedColor && !colorDetectionLoading && (
+                   <span className="ml-2 text-sm text-green-600">✨ {t('addItem:autodetected', { color: detectedColor.charAt(0).toUpperCase() + detectedColor.slice(1) })}</span>
+                 )}
+               </label>
               <select 
                 value={color}
                 onChange={(e) => setColor(e.target.value as ClothingItem['color'])}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 required
               >
-                {detectedColor && (
-                  <option value={detectedColor} className="font-semibold bg-green-50">
-                    🎨 {detectedColor.charAt(0).toUpperCase() + detectedColor.slice(1)} (detected)
-                  </option>
-                )}
-                <option value="black">Black</option>
-                <option value="white">White</option>
-                <option value="gray">Gray</option>
-                <option value="blue">Blue</option>
-                <option value="red">Red</option>
-                <option value="green">Green</option>
-                <option value="yellow">Yellow</option>
-                <option value="pink">Pink</option>
-                <option value="purple">Purple</option>
-                <option value="brown">Brown</option>
-                <option value="orange">Orange</option>
-                <option value="navy">Navy</option>
-                <option value="beige">Beige</option>
+                 {detectedColor && (
+                   <option value={detectedColor} className="font-semibold bg-green-50">
+                     🎨 {detectedColor.charAt(0).toUpperCase() + detectedColor.slice(1)}
+                   </option>
+                 )}
+                 <option value="black">{t('common:colors.black')}</option>
+                 <option value="white">{t('common:colors.white')}</option>
+                 <option value="gray">{t('common:colors.gray')}</option>
+                 <option value="blue">{t('common:colors.blue')}</option>
+                 <option value="red">{t('common:colors.red')}</option>
+                 <option value="green">{t('common:colors.green')}</option>
+                 <option value="yellow">{t('common:colors.yellow')}</option>
+                 <option value="pink">{t('common:colors.pink')}</option>
+                 <option value="purple">{t('common:colors.purple')}</option>
+                 <option value="brown">{t('common:colors.brown')}</option>
+                 <option value="orange">{t('common:colors.orange')}</option>
+                 <option value="navy">{t('common:colors.navy')}</option>
+                 <option value="beige">{t('common:colors.beige')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Seasons * (select at least one)
+                {t('addItem:seasonsLabel')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {['spring', 'summer', 'fall', 'winter'].map((season) => (
@@ -302,7 +304,7 @@ const AddItem = () => {
                       onChange={() => handleSeasonChange(season)}
                       className="mr-2 text-primary-500 focus:ring-primary-500" 
                     />
-                    {season.charAt(0).toUpperCase() + season.slice(1)}
+                    {t(`common:seasons.${season}`)}
                   </label>
                 ))}
               </div>
@@ -313,7 +315,7 @@ const AddItem = () => {
               disabled={loading}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Saving Item...' : 'Save Item'}
+              {loading ? t('addItem:saving') : t('addItem:save')}
             </button>
           </div>
         </div>

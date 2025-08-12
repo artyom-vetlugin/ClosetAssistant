@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ClothingService, type ClothingItemFilters } from '../lib/clothingService'
 import type { ClothingItem } from '../lib/supabase'
 import ItemDetail from '../components/ItemDetail'
+import { useTranslation } from 'react-i18next'
 
 const Wardrobe = () => {
   const location = useLocation()
@@ -12,6 +13,7 @@ const Wardrobe = () => {
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null)
   const [message, setMessage] = useState('')
   const [filters, setFilters] = useState<ClothingItemFilters>({})
+  const { t } = useTranslation(['wardrobe', 'common'])
 
   // Show success message if redirected from AddItem
   useEffect(() => {
@@ -35,7 +37,7 @@ const Wardrobe = () => {
       setItems(clothingItems)
     } catch (err) {
       console.error('Error loading items:', err)
-      setError('Failed to load wardrobe items')
+      setError(t('wardrobe:errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -61,7 +63,7 @@ const Wardrobe = () => {
         item.id === updatedItem.id ? updatedItem : item
       )
     )
-    setMessage('Item updated successfully!')
+    setMessage(t('wardrobe:updatedSuccess'))
     setTimeout(() => setMessage(''), 3000)
   }
 
@@ -70,7 +72,7 @@ const Wardrobe = () => {
     setItems(prevItems => 
       prevItems.filter(item => item.id !== deletedItemId)
     )
-    setMessage('Item deleted successfully!')
+    setMessage(t('wardrobe:deletedSuccess'))
     setTimeout(() => setMessage(''), 3000)
   }
 
@@ -83,71 +85,71 @@ const Wardrobe = () => {
       )}
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">My Wardrobe</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('wardrobe:title')}</h1>
         <Link to="/add-item" className="btn-primary">
-          Add Item
+          {t('wardrobe:addItem')}
         </Link>
       </div>
 
       {/* Filters */}
       <div className="card">
-        <h3 className="text-lg font-semibold mb-3">Filters</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('wardrobe:filtersTitle')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type
+              {t('wardrobe:type')}
             </label>
             <select 
               value={filters.type || ''}
               onChange={(e) => handleFilterChange('type', e.target.value)}
               className="w-full p-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
             >
-              <option value="">All types</option>
-              <option value="top">Tops</option>
-              <option value="bottom">Bottoms</option>
-              <option value="dress">Dresses</option>
-              <option value="outerwear">Outerwear</option>
-              <option value="shoes">Shoes</option>
-              <option value="accessory">Accessories</option>
+              <option value="">{t('wardrobe:allTypes')}</option>
+              <option value="top">{t('common:types.top')}</option>
+              <option value="bottom">{t('common:types.bottom')}</option>
+              <option value="dress">{t('common:types.dress')}</option>
+              <option value="outerwear">{t('common:types.outerwear')}</option>
+              <option value="shoes">{t('common:types.shoes')}</option>
+              <option value="accessory">{t('common:types.accessory')}</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Color
+              {t('wardrobe:color')}
             </label>
             <select 
               value={filters.color || ''}
               onChange={(e) => handleFilterChange('color', e.target.value)}
               className="w-full p-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
             >
-              <option value="">All colors</option>
-              <option value="black">Black</option>
-              <option value="white">White</option>
-              <option value="gray">Gray</option>
-              <option value="blue">Blue</option>
-              <option value="red">Red</option>
-              <option value="green">Green</option>
-              <option value="yellow">Yellow</option>
-              <option value="pink">Pink</option>
-              <option value="purple">Purple</option>
-              <option value="brown">Brown</option>
-              <option value="orange">Orange</option>
+              <option value="">{t('wardrobe:allColors')}</option>
+              <option value="black">{t('common:colors.black')}</option>
+              <option value="white">{t('common:colors.white')}</option>
+              <option value="gray">{t('common:colors.gray')}</option>
+              <option value="blue">{t('common:colors.blue')}</option>
+              <option value="red">{t('common:colors.red')}</option>
+              <option value="green">{t('common:colors.green')}</option>
+              <option value="yellow">{t('common:colors.yellow')}</option>
+              <option value="pink">{t('common:colors.pink')}</option>
+              <option value="purple">{t('common:colors.purple')}</option>
+              <option value="brown">{t('common:colors.brown')}</option>
+              <option value="orange">{t('common:colors.orange')}</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Season
+              {t('wardrobe:season')}
             </label>
             <select 
               value={filters.season || ''}
               onChange={(e) => handleFilterChange('season', e.target.value)}
               className="w-full p-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
             >
-              <option value="">All seasons</option>
-              <option value="spring">Spring</option>
-              <option value="summer">Summer</option>
-              <option value="fall">Fall</option>
-              <option value="winter">Winter</option>
+              <option value="">{t('wardrobe:allSeasons')}</option>
+              <option value="spring">{t('common:seasons.spring')}</option>
+              <option value="summer">{t('common:seasons.summer')}</option>
+              <option value="fall">{t('common:seasons.fall')}</option>
+              <option value="winter">{t('common:seasons.winter')}</option>
             </select>
           </div>
         </div>
@@ -161,7 +163,7 @@ const Wardrobe = () => {
             onClick={loadItems}
             className="ml-2 text-sm underline hover:no-underline"
           >
-            Try again
+            {t('common:tryAgain')}
           </button>
         </div>
       )}
@@ -170,7 +172,7 @@ const Wardrobe = () => {
       {loading && (
         <div className="text-center py-12">
           <div className="text-4xl mb-4">👗</div>
-          <p className="text-gray-600">Loading your wardrobe...</p>
+          <p className="text-gray-600">{t('wardrobe:loading')}</p>
         </div>
       )}
 
@@ -205,10 +207,10 @@ const Wardrobe = () => {
                     </span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {formatSeasons(item.seasons)}
+                    {formatSeasons(item.seasons.map((s) => t(`common:seasons.${s}`)))}
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
-                    Added {new Date(item.created_at).toLocaleDateString()}
+                    {t('wardrobe:addedOn', { date: new Date(item.created_at).toLocaleDateString() })}
                   </div>
                 </div>
               </div>
@@ -219,18 +221,18 @@ const Wardrobe = () => {
                 <div className="text-6xl mb-4">👗</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {Object.keys(filters).some(key => filters[key as keyof ClothingItemFilters]) 
-                    ? 'No items match your filters' 
-                    : 'No items yet'}
+                    ? t('wardrobe:emptyFilteredTitle') 
+                    : t('wardrobe:emptyTitle')}
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {Object.keys(filters).some(key => filters[key as keyof ClothingItemFilters])
-                    ? 'Try adjusting your filters or add more items to your wardrobe'
-                    : 'Start building your digital wardrobe by adding your first item'}
+                    ? t('wardrobe:emptyFilteredText')
+                    : t('wardrobe:emptyText')}
                 </p>
                 <Link to="/add-item" className="btn-primary">
                   {Object.keys(filters).some(key => filters[key as keyof ClothingItemFilters])
-                    ? 'Add More Items'
-                    : 'Add Your First Item'}
+                    ? t('wardrobe:addMore')
+                    : t('wardrobe:addFirst')}
                 </Link>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -9,12 +10,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation(['auth'])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!email || !password) {
-      setError('Please fill in all fields')
+      setError(t('auth:fillAllFields'))
       return
     }
 
@@ -24,7 +26,7 @@ const Login = () => {
       await signIn(email, password)
       navigate('/')
     } catch {
-      setError('Failed to sign in. Please check your credentials.')
+      setError(t('auth:failedSignIn'))
     } finally {
       setLoading(false)
     }
@@ -35,7 +37,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to Closet Assistant
+            {t('auth:signInTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
@@ -43,7 +45,7 @@ const Login = () => {
               to="/signup"
               className="font-medium text-primary-600 hover:text-primary-500"
             >
-              create a new account
+              {t('auth:orCreate')}
             </Link>
           </p>
         </div>
@@ -58,7 +60,7 @@ const Login = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('auth:email')}
               </label>
               <input
                 id="email"
@@ -69,13 +71,13 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
+                placeholder={t('auth:emailPlaceholder')}
               />
             </div>
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('auth:password')}
               </label>
               <input
                 id="password"
@@ -86,7 +88,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your password"
+                placeholder={t('auth:passwordPlaceholder')}
               />
             </div>
           </div>
@@ -96,7 +98,7 @@ const Login = () => {
               to="/reset-password"
               className="text-sm text-primary-600 hover:text-primary-500"
             >
-              Forgot your password?
+              {t('auth:forgotPassword')}
             </Link>
           </div>
 
@@ -106,7 +108,7 @@ const Login = () => {
               disabled={loading}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t('auth:signingIn') : t('auth:signIn')}
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 const Signup = () => {
   const [email, setEmail] = useState('')
@@ -10,23 +11,24 @@ const Signup = () => {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const { signUp } = useAuth()
+  const { t } = useTranslation(['auth'])
   // const navigate = useNavigate() // Will be used later for navigation after signup
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields')
+      setError(t('auth:fillAllFields'))
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('auth:passwordsNoMatch'))
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError(t('auth:passwordTooShort'))
       return
     }
 
@@ -36,7 +38,7 @@ const Signup = () => {
       await signUp(email, password)
       setSuccess(true)
     } catch {
-      setError('Failed to create account. Please try again.')
+      setError(t('auth:failedCreate'))
     } finally {
       setLoading(false)
     }
@@ -49,13 +51,13 @@ const Signup = () => {
           <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
             <div className="text-4xl mb-4">✅</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Check your email!
+              {t('auth:checkEmailTitle')}
             </h2>
             <p className="text-gray-600 mb-4">
-              We've sent you a confirmation link. Please check your email and click the link to activate your account.
+              {t('auth:checkEmailText')}
             </p>
             <Link to="/login" className="btn-primary">
-              Back to Sign In
+              {t('auth:backToSignIn')}
             </Link>
           </div>
         </div>
@@ -68,7 +70,7 @@ const Signup = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            {t('auth:createTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
@@ -76,7 +78,7 @@ const Signup = () => {
               to="/login"
               className="font-medium text-primary-600 hover:text-primary-500"
             >
-              sign in to your existing account
+              {t('auth:orSignInExisting')}
             </Link>
           </p>
         </div>
@@ -91,7 +93,7 @@ const Signup = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('auth:email')}
               </label>
               <input
                 id="email"
@@ -102,13 +104,13 @@ const Signup = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Enter your email"
+                placeholder={t('auth:emailPlaceholder')}
               />
             </div>
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('auth:password')}
               </label>
               <input
                 id="password"
@@ -119,13 +121,13 @@ const Signup = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Create a password (min 6 characters)"
+                placeholder={t('auth:passwordCreatePlaceholder')}
               />
             </div>
             
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                {t('auth:confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
@@ -136,7 +138,7 @@ const Signup = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Confirm your password"
+                placeholder={t('auth:confirmPasswordPlaceholder')}
               />
             </div>
           </div>
@@ -147,12 +149,12 @@ const Signup = () => {
               disabled={loading}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? t('auth:creatingAccount') : t('auth:createAccount')}
             </button>
           </div>
           
           <div className="text-xs text-gray-500 text-center">
-            By creating an account, you agree to our terms of service and privacy policy.
+            {t('auth:tosNotice')}
           </div>
         </form>
       </div>

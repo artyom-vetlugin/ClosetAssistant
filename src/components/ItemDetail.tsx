@@ -3,6 +3,7 @@ import type { ClothingItem } from '../lib/supabase'
 import { ClothingService } from '../lib/clothingService'
 import { ImageService } from '../lib/imageService'
 import { useAuth } from '../contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 interface ItemDetailProps {
   item: ClothingItem
@@ -17,6 +18,7 @@ const SEASONS = ['spring', 'summer', 'fall', 'winter']
 
 export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDetailProps) {
   const { user } = useAuth()
+  const { t } = useTranslation(['itemDetail', 'common', 'wardrobe'])
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -31,7 +33,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
 
   const handleSave = async () => {
     if (!editData.type || !editData.color || editData.seasons.length === 0) {
-      alert('Please fill in all fields')
+      alert(t('common.fillAllFields'))
       return
     }
 
@@ -47,7 +49,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating item:', error)
-      alert('Failed to update item')
+      alert(t('itemDetail.failedUpdate'))
     } finally {
       setIsLoading(false)
     }
@@ -69,7 +71,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
       onClose()
     } catch (error) {
       console.error('Error deleting item:', error)
-      alert('Failed to delete item')
+      alert(t('itemDetail.failedDelete'))
     } finally {
       setIsLoading(false)
     }
@@ -77,7 +79,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
 
   const handleRemoveBackground = async () => {
     if (!user?.id) {
-      alert('You must be signed in to modify images')
+      alert(t('addItem.mustLogin'))
       return
     }
     setIsRemovingBg(true)
@@ -105,7 +107,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
       onUpdate(updatedItem)
     } catch (error) {
       console.error('Error removing background:', error)
-      alert('Failed to remove background')
+      alert(t('itemDetail.failedRemoveBg'))
     } finally {
       setIsRemovingBg(false)
     }
@@ -125,7 +127,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">Item Details</h2>
+          <h2 className="text-xl font-semibold">{t('itemDetail:title')}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -151,7 +153,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                 disabled={isRemovingBg}
                 className="btn-secondary disabled:opacity-50"
               >
-                {isRemovingBg ? 'Removing background...' : 'Remove background'}
+                {isRemovingBg ? t('itemDetail:removingBg') : t('itemDetail:removeBg')}
               </button>
             </div>
           )}
@@ -160,21 +162,21 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
             /* View Mode */
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('wardrobe:type')}</label>
                 <p className="text-gray-900 capitalize">{item.type}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('wardrobe:color')}</label>
                 <p className="text-gray-900 capitalize">{item.color}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Seasons</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('wardrobe:season')}</label>
                 <div className="flex flex-wrap gap-2">
                   {(item.seasons || []).map(season => (
                     <span key={season} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm capitalize">
-                      {season}
+                      {t(`common:seasons.${season}`)}
                     </span>
                   ))}
                 </div>
@@ -185,13 +187,13 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                   onClick={() => setIsEditing(true)}
                   className="w-full btn-primary"
                 >
-                  Edit Item
+                  {t('itemDetail:editItem')}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
                 >
-                  Delete Item
+                  {t('itemDetail:deleteItem')}
                 </button>
               </div>
             </div>
@@ -199,7 +201,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
             /* Edit Mode */
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('wardrobe:type')}</label>
                 <select
                   value={editData.type}
                   onChange={(e) => setEditData(prev => ({ ...prev, type: e.target.value as ClothingItem['type'] }))}
@@ -212,7 +214,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('wardrobe:color')}</label>
                 <select
                   value={editData.color}
                   onChange={(e) => setEditData(prev => ({ ...prev, color: e.target.value as ClothingItem['color'] }))}
@@ -225,7 +227,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Seasons</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('wardrobe:season')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {SEASONS.map(season => (
                     <label key={season} className="flex items-center space-x-2 cursor-pointer">
@@ -235,7 +237,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                         onChange={() => toggleSeason(season)}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="capitalize">{season}</span>
+                      <span className="capitalize">{t(`common:seasons.${season}`)}</span>
                     </label>
                   ))}
                 </div>
@@ -247,7 +249,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                   disabled={isLoading}
                   className="flex-1 btn-primary disabled:opacity-50"
                 >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? t('outfitCard:saving') : t('itemDetail:saveChanges')}
                 </button>
                 <button
                   onClick={() => {
@@ -261,7 +263,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                   disabled={isLoading}
                   className="flex-1 btn-secondary"
                 >
-                  Cancel
+                  {t('common:cancel')}
                 </button>
               </div>
             </div>
@@ -273,9 +275,9 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold mb-2">Delete Item?</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('itemDetail:deleteConfirmTitle')}</h3>
             <p className="text-gray-600 mb-4">
-              This action cannot be undone. The item will be permanently removed from your wardrobe.
+              {t('itemDetail:deleteConfirmText')}
             </p>
             <div className="flex space-x-2">
               <button
@@ -283,14 +285,14 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                 disabled={isLoading}
                 className="flex-1 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 disabled:opacity-50"
               >
-                {isLoading ? 'Deleting...' : 'Delete'}
+                {isLoading ? t('common:deleting') : t('common:delete')}
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isLoading}
                 className="flex-1 btn-secondary"
               >
-                Cancel
+                {t('common:cancel')}
               </button>
             </div>
           </div>
