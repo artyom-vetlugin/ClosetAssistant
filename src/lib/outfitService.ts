@@ -588,4 +588,47 @@ export class OutfitSuggestionService {
       throw new Error('Failed to fetch saved outfits')
     }
   }
+
+  /**
+   * Rename an existing saved outfit
+   */
+  static async renameOutfit(outfitId: string, newName: string): Promise<Outfit> {
+    const name = newName.trim()
+    if (!name) {
+      throw new Error('Name cannot be empty')
+    }
+
+    try {
+      // Try new schema first
+      const { data, error } = await supabase
+        .from('outfits')
+        .update({ name })
+        .eq('id', outfitId)
+        .select()
+        .single()
+
+      if (!error && data) return data as Outfit
+
+      // If table missing -> legacy fallback
+      const tableMissing = (error as { code?: string; message?: string } | null)?.code === '42P01' || String((error as { message?: string } | null)?.message || '').includes('outfits')
+      if (!tableMissing) {
+        throw error
+      }
+
+      const { data: legacy, error: legacyErr } = await supabase
+        .from('saved_outfits')
+        .update({ name })
+        .eq('id', outfitId)
+        .select()
+        .single()
+
+      if (legacyErr) throw legacyErr
+
+      const row = legacy as unknown as { id: string; user_id: string; name: string; created_at: string }
+      return { id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at }
+    } catch (error) {
+      console.error('Error renaming outfit:', error)
+      throw new Error('Failed to rename outfit')
+    }
+  }
 }

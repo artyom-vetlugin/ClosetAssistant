@@ -13,11 +13,14 @@ const History = () => {
   const [editingId, setEditingId] = useState<string>('')
   const [pendingDate, setPendingDate] = useState<Record<string, string>>({})
 
+  const sortLogsByDateDesc = (arr: WearLogWithOutfit[]) =>
+    [...arr].sort((a, b) => b.worn_date.localeCompare(a.worn_date))
+
   useEffect(() => {
     ;(async () => {
       try {
         const res = await WearLogService.getHistory()
-        setLogs(res as unknown as WearLogWithOutfit[])
+        setLogs(sortLogsByDateDesc(res as unknown as WearLogWithOutfit[]))
       } catch {
         setError('Failed to load history')
       } finally {
@@ -74,7 +77,9 @@ const History = () => {
                               setEditingId('')
                               await WearLogService.updateWearLogDate(log.id, newDate)
                               setLogs((prev) =>
-                                prev.map((l) => (l.id === log.id ? { ...l, worn_date: newDate } : l))
+                                sortLogsByDateDesc(
+                                  prev.map((l) => (l.id === log.id ? { ...l, worn_date: newDate } : l))
+                                )
                               )
                             } catch {
                               setError('Failed to update date')

@@ -8,6 +8,11 @@ const SavedOutfits = () => {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [wearSavingId, setWearSavingId] = useState<string | null>(null)
+  const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
 
   const load = async () => {
     setLoading(true)
@@ -36,7 +41,70 @@ const SavedOutfits = () => {
     }
   }
 
+  const logWearWithDate = async (outfitId: string, date?: string) => {
+    const wornDate = (date || new Date().toISOString().slice(0, 10))
+    setWearSavingId(outfitId)
+    try {
+      await WearLogService.logWear(outfitId, wornDate)
+      setMessage(`Logged for ${wornDate}`)
+      setTimeout(() => setMessage(''), 2000)
+    } catch {
+      setError('Failed to log wear')
+      setTimeout(() => setError(''), 2500)
+    } finally {
+      setWearSavingId(null)
+    }
+  }
+
   if (loading) return <div className="py-12 text-center text-gray-600">Loading...</div>
+
+  const startEditing = (outfit: Outfit) => {
+    setEditingId(outfit.id)
+    setEditingName(outfit.name)
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingName('')
+  }
+
+  const commitRename = async () => {
+    if (!editingId) return
+    const id = editingId
+    const current = outfits.find((o) => o.id === id)
+    const oldName = current?.name || ''
+    const newName = editingName.trim()
+    if (!newName || newName === oldName) {
+      cancelEditing()
+      return
+    }
+
+    setSavingId(id)
+    // optimistic update
+    setOutfits((prev) => prev.map((o) => (o.id === id ? { ...o, name: newName } : o)))
+    try {
+      await OutfitSuggestionService.renameOutfit(id, newName)
+      setMessage('Name updated')
+      setTimeout(() => setMessage(''), 1500)
+    } catch {
+      setError('Failed to rename outfit')
+      // revert
+      setOutfits((prev) => prev.map((o) => (o.id === id ? { ...o, name: oldName } : o)))
+      setTimeout(() => setError(''), 2500)
+    } finally {
+      setSavingId(null)
+      cancelEditing()
+    }
+  }
+
+  const handleNameKeyDown: React.KeyboardEventHandler<HTMLInputElement> = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      await commitRename()
+    } else if (e.key === 'Escape') {
+      cancelEditing()
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -59,9 +127,33 @@ const SavedOutfits = () => {
                     <img key={it.id} src={it.image_url} className="aspect-square object-cover rounded" />
                   ))}
                 </div>
-                <div className="font-semibold mb-2">{o.name}</div>
+                <div className="mb-2">
+                  {editingId === o.id ? (
+                    <input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={handleNameKeyDown}
+                      disabled={savingId === o.id}
+                      autoFocus
+                      className="w-full font-semibold p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="font-semibold text-left hover:underline"
+                      title="Click to rename"
+                      onClick={() => startEditing(o)}
+                      disabled={savingId === o.id}
+                    >
+                      {savingId === o.id ? 'Saving…' : o.name}
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-2">
-                  <button className="btn-primary flex-1" onClick={() => wearToday(o.id)}>I wore this today</button>
+                  <button className="btn-primary flex-1" onClick={() => wearToday(o.id)} disabled={wearSavingId === o.id}>
+                    {wearSavingId === o.id ? 'Saving…' : 'I wore this today'}
+                  </button>
                   <details className="flex-1">
                     <summary className="btn-secondary w-full">Details</summary>
                     <div className="mt-3 text-sm text-gray-700">
@@ -74,8 +166,24 @@ const SavedOutfits = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3">
-                        <button className="btn-primary w-full" onClick={() => wearToday(o.id)}>Log wear</button>
+                      <div className="mt-3 space-y-2">
+                        <label className="block text-xs text-gray-600">Select date</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="date"
+                            max={new Date().toISOString().slice(0, 10)}
+                            value={wearDateByOutfit[o.id] ?? new Date().toISOString().slice(0, 10)}
+                            onChange={(e) => setWearDateByOutfit((prev) => ({ ...prev, [o.id]: e.target.value }))}
+                            className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            className="btn-primary flex-1"
+                            onClick={() => logWearWithDate(o.id, wearDateByOutfit[o.id])}
+                            disabled={wearSavingId === o.id}
+                          >
+                            {wearSavingId === o.id ? 'Saving…' : 'Log wear'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </details>
