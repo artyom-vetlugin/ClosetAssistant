@@ -4,6 +4,16 @@ import { ClothingService } from './clothingService'
 import { ColorHarmonyEngine } from './colorRules'
 import type { ClothingItem, Outfit, OutfitItem } from './supabase'
 
+export interface ScoreBreakdown {
+  color: number
+  season: number
+  variety: number
+  freshness: number
+  accessory: number
+  penalties: number
+  total: number
+}
+
 export interface OutfitSuggestion {
   id: string
   items: {
@@ -14,6 +24,7 @@ export interface OutfitSuggestion {
   }
   score: number
   reasoning: string[]
+  breakdown: ScoreBreakdown
 }
 
 export interface OutfitSuggestionOptions {
@@ -97,7 +108,16 @@ export class OutfitSuggestionService {
               id: uuidv4(),
               items: { top, bottom, shoes: shoe },
               score: 0,
-              reasoning: []
+              reasoning: [],
+              breakdown: {
+                color: 0,
+                season: 0,
+                variety: 0,
+                freshness: 0,
+                accessory: 0,
+                penalties: 0,
+                total: 0
+              }
             }
             const keyBase = `${top.id}|${bottom.id}|${shoe.id}`
             if (!seen.has(keyBase)) {
@@ -115,7 +135,16 @@ export class OutfitSuggestionService {
                     id: uuidv4(),
                     items: { top, bottom, shoes: shoe, accessory },
                     score: 0,
-                    reasoning: []
+                    reasoning: [],
+                    breakdown: {
+                      color: 0,
+                      season: 0,
+                      variety: 0,
+                      freshness: 0,
+                      accessory: 0,
+                      penalties: 0,
+                      total: 0
+                    }
                   })
                 }
               }
@@ -131,7 +160,8 @@ export class OutfitSuggestionService {
         return {
           ...outfit,
           score: scored.score,
-          reasoning: scored.reasoning
+          reasoning: scored.reasoning,
+          breakdown: scored.breakdown
         }
       })
 
@@ -158,10 +188,19 @@ export class OutfitSuggestionService {
     outfit: OutfitSuggestion,
     seasonPreference?: string,
     recentItemIds?: Set<string>
-  ): { score: number; reasoning: string[] } {
+  ): { score: number; reasoning: string[]; breakdown: ScoreBreakdown } {
     const { top, bottom, shoes, accessory } = outfit.items
     let totalScore = 0
     const reasoning: string[] = []
+    const breakdown: ScoreBreakdown = {
+      color: 0,
+      season: 0,
+      variety: 0,
+      freshness: 0,
+      accessory: 0,
+      penalties: 0,
+      total: 0
+    }
 
     // 1. Color Harmony Score (45% weight)
     const colorScore = ColorHarmonyEngine.scoreColorCombination(
@@ -169,7 +208,8 @@ export class OutfitSuggestionService {
       bottom.color,
       shoes.color
     )
-    totalScore += colorScore * 0.45
+    breakdown.color = colorScore * 0.45
+    totalScore += breakdown.color
 
     // Add color reasoning
     const colorReasons = ColorHarmonyEngine.generateColorReasoning(
@@ -182,7 +222,8 @@ export class OutfitSuggestionService {
     // 2. Season Matching Score (40% weight - increased importance)
     if (seasonPreference) {
       const seasonScore = this.scoreSeasonMatch([top, bottom, shoes], seasonPreference)
-      totalScore += seasonScore * 0.4
+      breakdown.season = seasonScore * 0.4
+      totalScore += breakdown.season
 
       // Check if any items are completely wrong for the season
       const wrongSeasonItems = [top, bottom, shoes].filter(item => 
@@ -191,7 +232,9 @@ export class OutfitSuggestionService {
       
       if (wrongSeasonItems.length > 0) {
         // Heavy penalty for wrong season items
-        totalScore -= 30 * wrongSeasonItems.length
+        const penalty = 30 * wrongSeasonItems.length
+        totalScore -= penalty
+        breakdown.penalties -= penalty
         reasoning.push(`⚠️ Some items not ideal for ${seasonPreference}`)
       } else if (seasonScore >= 80) {
         reasoning.push(`Perfect for ${seasonPreference} weather`)
@@ -200,12 +243,14 @@ export class OutfitSuggestionService {
       }
     } else {
       // No season preference, give neutral score
-      totalScore += 75 * 0.4
+      breakdown.season = 75 * 0.4
+      totalScore += breakdown.season
     }
 
     // 3. Variety/Balance Score (15% weight)
     const varietyScore = this.scoreItemVariety([top, bottom, shoes, accessory].filter(Boolean) as ClothingItem[])
-    totalScore += varietyScore * 0.15
+    breakdown.variety = varietyScore * 0.15
+    totalScore += breakdown.variety
 
     if (varietyScore >= 80) {
       reasoning.push(`Good variety in clothing types`)
@@ -216,9 +261,13 @@ export class OutfitSuggestionService {
       const recentlyUsedCount = [top, bottom, shoes].filter((i) => recentItemIds.has(i.id)).length
       if (recentlyUsedCount === 0) {
         totalScore += 10
+        breakdown.freshness += 10
         reasoning.push('Fresh picks not worn recently')
       } else {
-        totalScore -= recentlyUsedCount * 8
+        const repeatPenalty = recentlyUsedCount * 8
+        totalScore -= repeatPenalty
+        breakdown.freshness -= repeatPenalty
+        breakdown.penalties -= repeatPenalty
         if (recentlyUsedCount >= 2) {
           reasoning.push('Some items repeated from recent outfits')
         }
@@ -229,6 +278,7 @@ export class OutfitSuggestionService {
     if (accessory) {
       // Small bonus for including accessories
       totalScore += 5
+      breakdown.accessory += 5
       
       // Check if accessory color works
       const accessoryColorScore = Math.min(
@@ -238,13 +288,18 @@ export class OutfitSuggestionService {
       
       if (accessoryColorScore >= 70) {
         totalScore += 5
+        breakdown.accessory += 5
         reasoning.push(`${accessory.color} accessory complements the outfit`)
       }
     }
 
+    const final = Math.round(Math.max(0, Math.min(100, totalScore)))
+    breakdown.total = final
+
     return {
-      score: Math.round(Math.max(0, Math.min(100, totalScore))),
-      reasoning: reasoning.slice(0, 3) // Limit to top 3 reasons
+      score: final,
+      reasoning: reasoning.slice(0, 3), // Limit to top 3 reasons
+      breakdown
     }
   }
 

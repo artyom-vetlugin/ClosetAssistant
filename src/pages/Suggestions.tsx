@@ -87,6 +87,22 @@ const Suggestions = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">{t('suggestions:title')}</h1>
 
+      <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded">
+        <details>
+          <summary className="cursor-pointer font-medium">
+            {t('suggestions:howScoringWorks', { defaultValue: 'How scoring works' })}
+          </summary>
+          <ul className="mt-2 list-disc list-inside text-sm">
+            <li>{t('suggestions:colorWeight', { defaultValue: 'Color harmony (45%): neutrals pair with anything; one bold + neutrals scores well; two bolds need balance; neutral shoes help.' })}</li>
+            <li>{t('suggestions:seasonWeight', { defaultValue: 'Season match (40%): items tagged for the chosen season score highest; wrong-season items receive heavy penalties.' })}</li>
+            <li>{t('suggestions:varietyWeight', { defaultValue: 'Variety (15%): balanced mix of colors and all required pieces.' })}</li>
+            <li>{t('suggestions:freshnessBonus', { defaultValue: 'Freshness: bonus for items not worn in the last 3 logs; repeats get small penalties.' })}</li>
+            <li>{t('suggestions:accessoryBonus', { defaultValue: 'Accessory: small bonus; extra if accessory color complements.' })}</li>
+            <li>{t('suggestions:bestCombos', { defaultValue: 'Best-scoring combos: all neutrals; one bold + two neutrals; two bolds with neutral shoes and good pairing; perfect-season matches.' })}</li>
+          </ul>
+        </details>
+      </div>
+
       {/* Success/Error Messages */}
       {message && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded flex justify-between items-center">

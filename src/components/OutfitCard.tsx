@@ -14,6 +14,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
   const [customName, setCustomName] = useState('')
   const [saving, setSaving] = useState(false)
   const { t } = useTranslation(['outfitCard', 'common'])
+  const [showDetails, setShowDetails] = useState(false)
 
   const handleSaveClick = () => {
     setShowSaveDialog(true)
@@ -113,8 +114,8 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
                 className="w-full h-full object-cover rounded"
                 loading="lazy"
               />
-              <div className="absolute bottom-0 left-0 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                Accessory
+            <div className="absolute bottom-0 left-0 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                {t('common:types.accessory')}
               </div>
             </div>
           </div>
@@ -126,13 +127,13 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
                 <span className="font-medium">{t('outfitCard:colors')}</span>
             <div className="flex gap-1">
               <span className="px-2 py-1 bg-gray-100 rounded text-xs capitalize">
-                {outfit.items.top.color}
+                {t(`common:colors.${outfit.items.top.color}` as const, { defaultValue: outfit.items.top.color })}
               </span>
               <span className="px-2 py-1 bg-gray-100 rounded text-xs capitalize">
-                {outfit.items.bottom.color}
+                {t(`common:colors.${outfit.items.bottom.color}` as const, { defaultValue: outfit.items.bottom.color })}
               </span>
               <span className="px-2 py-1 bg-gray-100 rounded text-xs capitalize">
-                {outfit.items.shoes.color}
+                {t(`common:colors.${outfit.items.shoes.color}` as const, { defaultValue: outfit.items.shoes.color })}
               </span>
             </div>
           </div>
@@ -143,13 +144,90 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-700 mb-1">{t('outfitCard:whyWorks')}</h4>
             <ul className="text-xs text-gray-600 space-y-1">
-              {outfit.reasoning.map((reason, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="text-green-500 mr-1">•</span>
-                  <span>{reason}</span>
-                </li>
-              ))}
+              {outfit.reasoning.map((reason, index) => {
+                // Try to translate known patterns
+                const lower = reason.toLowerCase()
+                let translated = reason
+                if (lower.includes('shoes work with any color')) {
+                  const shoes = t(`common:colors.${outfit.items.shoes.color}` as const, { defaultValue: outfit.items.shoes.color })
+                  translated = t('outfitCard:reasons.shoesNeutral', { shoes })
+                } else if (lower.includes('create a balanced look')) {
+                  const top = t(`common:colors.${outfit.items.top.color}` as const, { defaultValue: outfit.items.top.color })
+                  const bottom = t(`common:colors.${outfit.items.bottom.color}` as const, { defaultValue: outfit.items.bottom.color })
+                  translated = t('outfitCard:reasons.pairBalanced', { top, bottom })
+                } else if (lower.includes('are complementary colors')) {
+                  const top = t(`common:colors.${outfit.items.top.color}` as const, { defaultValue: outfit.items.top.color })
+                  const bottom = t(`common:colors.${outfit.items.bottom.color}` as const, { defaultValue: outfit.items.bottom.color })
+                  translated = t('outfitCard:reasons.complementary', { top, bottom })
+                } else if (lower.includes('neutral shoes balance')) {
+                  translated = t('outfitCard:reasons.neutralShoesBalance')
+                } else if (lower.includes('all neutral colors')) {
+                  translated = t('outfitCard:reasons.allNeutrals')
+                } else if (lower.includes('may clash')) {
+                  const top = t(`common:colors.${outfit.items.top.color}` as const, { defaultValue: outfit.items.top.color })
+                  const bottom = t(`common:colors.${outfit.items.bottom.color}` as const, { defaultValue: outfit.items.bottom.color })
+                  translated = t('outfitCard:reasons.mayClash', { top, bottom })
+                } else if (lower.startsWith('⚠️ some items not ideal for')) {
+                  const season = t(`common:seasons.${(reason.split(' ').pop() || '').toLowerCase()}` as const, { defaultValue: reason.split(' ').pop() })
+                  translated = t('outfitCard:reasons.notIdealSeason', { season })
+                } else if (lower.startsWith('perfect for')) {
+                  const seasonKey = (reason.replace(/perfect for\s*/i, '').replace(/\s*weather/i, '').trim()).toLowerCase()
+                  const season = t(`common:seasons.${seasonKey}` as const, { defaultValue: seasonKey })
+                  translated = t('outfitCard:reasons.perfectSeason', { season })
+                } else if (lower.startsWith('suitable for')) {
+                  const seasonKey = (reason.replace(/suitable for\s*/i, '').trim()).toLowerCase()
+                  const season = t(`common:seasons.${seasonKey}` as const, { defaultValue: seasonKey })
+                  translated = t('outfitCard:reasons.suitableSeason', { season })
+                } else if (lower.includes('good variety in clothing types')) {
+                  translated = t('outfitCard:reasons.goodVariety')
+                } else if (lower.includes('fresh picks not worn recently')) {
+                  translated = t('outfitCard:reasons.freshPicks')
+                } else if (lower.includes('some items repeated from recent outfits')) {
+                  translated = t('outfitCard:reasons.repeatItems')
+                } else if (lower.includes('accessory complements the outfit')) {
+                  // e.g., "brown accessory complements the outfit"
+                  const colorWord = reason.split(' ')[0].toLowerCase()
+                  const color = t(`common:colors.${colorWord}` as const, { defaultValue: colorWord })
+                  translated = t('outfitCard:reasons.accessoryComplement', { color })
+                }
+                return (
+                  <li key={index} className="flex items-start">
+                    <span className="text-green-500 mr-1">•</span>
+                    <span>{translated}</span>
+                  </li>
+                )
+              })}
             </ul>
+          </div>
+        )}
+
+        {outfit.breakdown && (
+          <div className="mb-4">
+            <button
+              onClick={() => setShowDetails((v) => !v)}
+              className="text-xs text-gray-600 underline"
+            >
+              {showDetails
+                ? t('outfitCard:hideDetails', { defaultValue: 'Hide score details' })
+                : t('outfitCard:showDetails', { defaultValue: 'Show score details' })}
+            </button>
+            {showDetails && (
+              <ul className="mt-2 text-xs text-gray-600 space-y-1">
+                <li>{t('outfitCard:breakdown.colorHarmony')}: +{Math.round(outfit.breakdown.color)}</li>
+                <li>{t('outfitCard:breakdown.seasonMatch')}: +{Math.round(outfit.breakdown.season)}</li>
+                <li>{t('outfitCard:breakdown.variety')}: +{Math.round(outfit.breakdown.variety)}</li>
+                {outfit.breakdown.freshness !== 0 && (
+                  <li>{t('outfitCard:breakdown.freshness')}: {outfit.breakdown.freshness > 0 ? '+' : ''}{Math.round(outfit.breakdown.freshness)}</li>
+                )}
+                {outfit.breakdown.accessory !== 0 && (
+                  <li>{t('outfitCard:breakdown.accessory')}: {outfit.breakdown.accessory > 0 ? '+' : ''}{Math.round(outfit.breakdown.accessory)}</li>
+                )}
+                {outfit.breakdown.penalties < 0 && (
+                  <li>{t('outfitCard:breakdown.penalties')}: {Math.round(outfit.breakdown.penalties)}</li>
+                )}
+                <li className="font-medium">{t('outfitCard:breakdown.total')}: {outfit.score}/100</li>
+              </ul>
+            )}
           </div>
         )}
 
