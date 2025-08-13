@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { OutfitSuggestionService } from '../lib/outfitService'
 import { WearLogService } from '../lib/wearLogService'
 import type { ClothingItem, Outfit } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
+import { toPng } from 'html-to-image'
 
 const SavedOutfits = () => {
   const [outfits, setOutfits] = useState<(Outfit & { items: ClothingItem[] })[]>([])
@@ -15,6 +16,22 @@ const SavedOutfits = () => {
   const [wearSavingId, setWearSavingId] = useState<string | null>(null)
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
   const { t } = useTranslation(['saved'])
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const exportCard = async (id: string) => {
+    try {
+      const node = cardRefs.current[id]
+      if (!node) return
+      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 })
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `${id}.png`
+      a.click()
+    } catch (e) {
+      setError(t('saved:failedExport', { defaultValue: 'Failed to export image' }))
+      setTimeout(() => setError(''), 2000)
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -123,7 +140,11 @@ const SavedOutfits = () => {
           {outfits.map((o) => {
             const items = o.items ?? []
             return (
-              <div key={o.id} className="card">
+              <div
+                key={o.id}
+                className="card"
+                ref={(el) => { cardRefs.current[o.id] = el }}
+              >
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {items.slice(0, 3).map((it) => (
                     <img key={it.id} src={it.image_url} className="aspect-square object-cover rounded" />
@@ -155,6 +176,9 @@ const SavedOutfits = () => {
                 <div className="flex gap-2">
                   <button className="btn-primary flex-1" onClick={() => wearToday(o.id)} disabled={wearSavingId === o.id}>
                     {wearSavingId === o.id ? t('saved:saving') : t('saved:woreToday')}
+                  </button>
+                  <button className="btn-secondary" onClick={() => exportCard(o.id)}>
+                    {t('saved:export', { defaultValue: 'Export' })}
                   </button>
                   <details className="flex-1">
                     <summary className="btn-secondary w-full">{t('saved:details')}</summary>

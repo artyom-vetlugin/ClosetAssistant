@@ -23,13 +23,17 @@
     "coverage": {
       "provider": "v8",
       "reportsDirectory": "./coverage",
-      "reporter": ["text", "lcov"]
+      "reporter": [
+        "text",
+        "lcov"
+      ]
     }
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
     "@supabase/supabase-js": "^2.53.0",
     "browser-image-compression": "^2.0.2",
+    "html-to-image": "^1.11.13",
     "i18next": "^25.3.4",
     "i18next-browser-languagedetector": "^8.2.0",
     "react": "^19.1.0",
@@ -47,6 +51,7 @@
     "@types/react-dom": "^19.1.6",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.6.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.30.1",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -59,7 +64,6 @@
     "typescript-eslint": "^8.35.1",
     "vite": "^7.0.4",
     "vite-plugin-pwa": "^1.0.2",
-    "vitest": "^3.2.4",
-    "@vitest/coverage-v8": "^3.2.4"
+    "vitest": "^3.2.4"
   }
 }
