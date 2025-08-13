@@ -18,8 +18,8 @@
 ## 4. MVP Scope
 
 ### In
-- Add items: photo upload (camera or gallery) + **smart color detection** + manual tags (type, color, season) + **optional background removal toggle** (uploads clipped image with transparent background when enabled).
-- Browse wardrobe by filters (type, color, season).
+- Add items: photo upload (camera or gallery) + **smart color detection** + manual tags (type, color, seasons) + **optional background removal toggle** (uploads clipped image with transparent background when enabled).
+- Browse wardrobe by filters (type, color, seasons).
 - **Edit & delete items**: modify item details or remove items from wardrobe.
 - **Suggest outfits** using simple pairing rules (tops + bottoms + shoes; accessories optional).
 - Visual outfit builder: display items in a clean collage; **Save look**.
@@ -44,8 +44,8 @@
 - I can accept the detected color or manually select a different one from the dropdown.
 - I can toggle **Remove background** before saving; when enabled, the uploaded image is stored with the background removed (alpha PNG/WebP). When disabled, the original image is stored.
 - Preview and color detection are based on the original image (no background removal applied automatically during preview).
-- When I fill **Type, Color, Season**, **then** I can save the item.
-- If **Type/Color/Season** is missing, **then** the **Save** button is disabled and I see a short hint.
+- When I fill **Type, Color, Seasons (≥1)**, **then** I can save the item.
+- If **Type/Color/Seasons** is missing (or no season selected), **then** the **Save** button is disabled and I see a short hint.
 - After save, I see a success toast and the new item appears in **My Wardrobe**.
 
 ### 5.2 Browse & Filter Wardrobe
@@ -83,6 +83,8 @@
 - Selecting a suggestion opens a collage with the three items.
 - **Save Look** stores the outfit with a timestamp and a generated name (e.g., "Casual #3").
 - Saved looks appear in **Saved Outfits** list.
+- From **Saved Outfits**, I can click the outfit name to rename it inline (saves on blur/Enter, with optimistic UI).
+- From **Saved Outfits**, I can export the outfit collage as a PNG image for sharing.
 
 ### 5.5 Log Today's Outfit
 
@@ -93,6 +95,7 @@
 - **History** shows a reverse-chronological list (most recent on top) with date + outfit name.
 - In **History**, each log has a **Delete** action that immediately removes the log without confirmation.
 - In **History**, click the date to inline edit via a date picker; saving updates the entry immediately.
+- From **Saved Outfits**, I can also pick a specific date and log wear for that date directly.
 
 ### 5.6 Basic Performance & Installability
 
@@ -107,6 +110,7 @@
 Start with deterministic, readable rules:
 
 - **Required structure:** Top + Bottom + Shoes (Accessories optional if present).
+- Dresses are supported as an item type in the wardrobe and saved looks, but auto-suggestions in v1 still target Top + Bottom + Shoes.
 - **Season match:** Prefer items with matching season to the current user-selected season filter (if set).
 - **Color harmony:**
   - Avoid pairing identical bold colors unless they're neutrals.
@@ -114,6 +118,10 @@ Start with deterministic, readable rules:
   - If both Top and Bottom are non-neutral, suggest Shoes neutral.
 - **Variation rule:** Prefer using items not used in the **last 3 worn logs** to surface underused pieces.
 - Generate up to **6** unique combinations; de-duplicate by item IDs.
+
+Scoring details (implemented):
+- Color harmony 45%, season 40%, variety/balance 15%, small accessory bonuses; top 3 reasoning points shown.
+- If a season preference is set, adjacent seasons get partial credit; clearly wrong-season items incur heavy penalties.
 
 > Implementation tip: pre-compute neutral vs non-neutral at tag time. Keep rules in one file (e.g., `rules.ts`) for easy iteration.
 
@@ -123,7 +131,7 @@ Start with deterministic, readable rules:
 - id (uuid), email, display_name, created_at
 
 ### items
-- id (uuid), user_id (fk), **photo_url**, **type** (top|bottom|shoes|accessory), **color** (string), **season** (all|winter|spring|summer|fall), created_at
+- id (uuid), user_id (fk), **image_url**, **type** (top|bottom|dress|outerwear|shoes|accessory), **color** (string), **seasons** (text[] of 'spring'|'summer'|'fall'|'winter'|'all'), created_at
 
 ### outfits
 - id (uuid), user_id (fk), name, created_at
@@ -135,7 +143,7 @@ Start with deterministic, readable rules:
 - id (uuid), user_id (fk), outfit_id (fk), worn_date (date), created_at
 
 ### Indexes
-- items(user_id, type), items(user_id, color), outfit_items(outfit_id), wear_logs(user_id, worn_date)
+- items(user_id, type), items(user_id, color), outfit_items(outfit_id), wear_logs(user_id, worn_date), optional GIN index on items.seasons for season queries
 
 ## 8. Tech Stack (Ship Fast on Web & Mobile)
 
@@ -214,6 +222,9 @@ Start with deterministic, readable rules:
 - Storage hygiene: item delete also removes the associated Supabase Storage image (best-effort)
 - PWA upgrade: runtime caching for Supabase public storage images for faster grids and limited offline support
 - i18n: Full interface localization to English and Russian, namespaced keys and a persistent language selector added.
+- Saved Outfits: inline rename (click name) with optimistic update; date-specific wear logging from the page
+- Saved Outfits: export outfit collage as PNG via html-to-image
+- Data model: items now support multi-season tags (`seasons[]`) and additional types (`dress`, `outerwear`)
 
 ## 10. Success Metrics (MVP)
 
