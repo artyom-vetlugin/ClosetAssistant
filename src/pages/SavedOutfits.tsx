@@ -17,12 +17,24 @@ const SavedOutfits = () => {
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
   const { t } = useTranslation(['saved'])
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const exportRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const selectPreviewItems = (items: ClothingItem[]) => {
+    const dress = items.find((i) => i.type === 'dress')
+    const shoes = items.find((i) => i.type === 'shoes')
+    if (dress) {
+      return [dress, ...(shoes ? [shoes] : [])]
+    }
+    const top = items.find((i) => i.type === 'top')
+    const bottom = items.find((i) => i.type === 'bottom')
+    return [top, bottom, shoes].filter(Boolean) as ClothingItem[]
+  }
 
   const exportCard = async (id: string) => {
     try {
-      const node = cardRefs.current[id]
+      const node = exportRefs.current[id] || cardRefs.current[id]
       if (!node) return
-      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 })
+      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2, backgroundColor: '#ffffff' })
       const a = document.createElement('a')
       a.href = dataUrl
       a.download = `${id}.png`
@@ -140,39 +152,42 @@ const SavedOutfits = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {outfits.map((o) => {
             const items = o.items ?? []
+            const previewItems = selectPreviewItems(items)
             return (
               <div
                 key={o.id}
                 className="card"
                 ref={(el) => { cardRefs.current[o.id] = el }}
               >
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {items.slice(0, 3).map((it) => (
-                    <img key={it.id} src={it.image_url} className="aspect-square object-cover rounded" />
-                  ))}
-                </div>
-                <div className="mb-2">
-                  {editingId === o.id ? (
-                    <input
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onBlur={commitRename}
-                      onKeyDown={handleNameKeyDown}
-                      disabled={savingId === o.id}
-                      autoFocus
-                      className="w-full font-semibold p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      className="font-semibold text-left hover:underline"
-                      title={t('saved:clickToRename')}
-                      onClick={() => startEditing(o)}
-                      disabled={savingId === o.id}
-                    >
-                      {savingId === o.id ? t('saved:saving') : o.name}
-                    </button>
-                  )}
+                <div ref={(el) => { exportRefs.current[o.id] = el }}>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {previewItems.map((it) => (
+                      <img key={it.id} src={it.image_url} className="aspect-square object-cover rounded" />
+                    ))}
+                  </div>
+                  <div className="mb-2">
+                    {editingId === o.id ? (
+                      <input
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onBlur={commitRename}
+                        onKeyDown={handleNameKeyDown}
+                        disabled={savingId === o.id}
+                        autoFocus
+                        className="w-full font-semibold p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="font-semibold text-left hover:underline"
+                        title={t('saved:clickToRename')}
+                        onClick={() => startEditing(o)}
+                        disabled={savingId === o.id}
+                      >
+                        {savingId === o.id ? t('saved:saving') : o.name}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-primary flex-1" onClick={() => wearToday(o.id)} disabled={wearSavingId === o.id}>
