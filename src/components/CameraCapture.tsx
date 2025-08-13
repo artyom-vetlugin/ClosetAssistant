@@ -139,6 +139,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
   // Start camera when component mounts
   useEffect(() => {
     startCamera()
+    const videoAtMount = videoRef.current
     
     // Also stop camera when user leaves the page
     const handleBeforeUnload = () => {
@@ -197,10 +198,10 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       }
       
       // Clear video element aggressively
-      if (videoRef.current) {
-        videoRef.current.pause()
-        videoRef.current.srcObject = null
-        videoRef.current.load()
+      if (videoAtMount) {
+        videoAtMount.pause()
+        ;(videoAtMount as HTMLVideoElement & { srcObject?: MediaStream | null }).srcObject = null
+        videoAtMount.load()
       }
       if (startTimeoutRef.current) {
         clearTimeout(startTimeoutRef.current)

@@ -28,6 +28,7 @@ const SavedOutfits = () => {
       a.download = `${id}.png`
       a.click()
     } catch (e) {
+      console.error(e)
       setError(t('saved:failedExport', { defaultValue: 'Failed to export image' }))
       setTimeout(() => setError(''), 2000)
     }

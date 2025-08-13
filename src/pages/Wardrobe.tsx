@@ -24,11 +24,6 @@ const Wardrobe = () => {
     }
   }, [location.state])
 
-  // Load clothing items
-  useEffect(() => {
-    loadItems()
-  }, [filters])
-
   const loadItems = useCallback(async () => {
     try {
       setLoading(true)
@@ -42,6 +37,11 @@ const Wardrobe = () => {
       setLoading(false)
     }
   }, [filters, t])
+
+  // Load clothing items
+  useEffect(() => {
+    loadItems()
+  }, [filters, loadItems])
 
   const handleFilterChange = (filterType: keyof ClothingItemFilters, value: string) => {
     setFilters(prev => ({
