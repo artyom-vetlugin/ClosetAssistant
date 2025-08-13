@@ -10,11 +10,12 @@ const defaultItems = [
   { id: 'a1', type: 'accessory', color: 'black', seasons: ['all'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
 ]
 
-let getItemsSpy: any
+let getItemsSpy: ReturnType<typeof vi.spyOn>
 
 beforeEach(() => {
   getItemsSpy?.mockRestore()
-  getItemsSpy = vi.spyOn(ClothingService, 'getItems').mockResolvedValue(defaultItems as ClothingItem[])
+  getItemsSpy = vi.spyOn(ClothingService, 'getItems') as unknown as ReturnType<typeof vi.spyOn>
+  ;(getItemsSpy as unknown as { mockResolvedValue: (v: ClothingItem[]) => void }).mockResolvedValue(defaultItems as ClothingItem[])
 })
 
 describe('OutfitSuggestionService.generateSuggestions', () => {

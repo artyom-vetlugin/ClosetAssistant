@@ -28,11 +28,16 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
   const [isRemovingBg, setIsRemovingBg] = useState(false)
   
   // Edit form state
-  const [editData, setEditData] = useState({
+  const [editData, setEditData] = useState<{
+    type: ClothingItem['type']
+    color: ClothingItem['color']
+    seasons: string[]
+    styles: string[]
+  }>({
     type: item.type,
     color: item.color,
     seasons: item.seasons || [],
-    styles: (item as any).styles || []
+    styles: item.styles || []
   })
 
   const handleSave = async () => {
@@ -196,11 +201,11 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                 </div>
               </div>
 
-              {(item as any).styles && (item as any).styles.length > 0 && (
+              {item.styles && item.styles.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('itemDetail:stylesLabel', { defaultValue: 'Styles' })}</label>
                   <div className="flex flex-wrap gap-2">
-                    {((item as any).styles as string[]).map(style => (
+                    {item.styles.map(style => (
                       <span key={style} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm capitalize">
                         {t(`common:styles.${style}`, style.replace('_', ' '))}
                       </span>
@@ -302,7 +307,7 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                       type: item.type,
                       color: item.color,
                       seasons: item.seasons || [],
-                      styles: (item as any).styles || []
+                      styles: item.styles || []
                     })
                   }}
                   disabled={isLoading}

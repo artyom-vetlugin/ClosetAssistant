@@ -316,7 +316,7 @@ export class OutfitSuggestionService {
    * Score how well item styles match
    */
   private static scoreStyleMatch(items: ClothingItem[]): number {
-    const stylesPerItem: Set<string>[] = items.map((i) => new Set<string>((((i as any).styles || []) as string[]).map((s) => String(s).toLowerCase())))
+    const stylesPerItem: Set<string>[] = items.map((i) => new Set<string>(((i.styles || []) as string[]).map((s) => String(s).toLowerCase())))
     if (stylesPerItem.every(s => s.size === 0)) return 60
 
     // If any common style across all main items → strong score
