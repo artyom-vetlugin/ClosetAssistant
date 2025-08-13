@@ -19,6 +19,12 @@ const AddItem = () => {
   const [type, setType] = useState<ClothingItem['type']>('top')
   const [color, setColor] = useState<ClothingItem['color']>('black')
   const [seasons, setSeasons] = useState<string[]>([])
+  const [styles, setStyles] = useState<string[]>([])
+  const styleOptions = [
+    'casual','formal','sport','streetwear','outdoor','beach','home'
+  ]
+  const toggleStyle = (s: string) =>
+    setStyles(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
   
   // UI state
   const [showCamera, setShowCamera] = useState(false)
@@ -117,6 +123,7 @@ const AddItem = () => {
         type,
         color,
         seasons,
+        styles,
         image_url: imageUrl,
       })
 
@@ -305,6 +312,26 @@ const AddItem = () => {
                       className="mr-2 text-primary-500 focus:ring-primary-500" 
                     />
                     {t(`common:seasons.${season}`)}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Styles */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('addItem:stylesLabel', 'Styles')}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {styleOptions.map((s) => (
+                  <label key={s} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={styles.includes(s)}
+                      onChange={() => toggleStyle(s)}
+                      className="mr-2 text-primary-500 focus:ring-primary-500"
+                    />
+                    {t(`common:styles.${s}`, s.replace('_', ' '))}
                   </label>
                 ))}
               </div>

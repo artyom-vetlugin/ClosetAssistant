@@ -93,9 +93,10 @@ const Suggestions = () => {
             {t('suggestions:howScoringWorks', { defaultValue: 'How scoring works' })}
           </summary>
           <ul className="mt-2 list-disc list-inside text-sm">
-            <li>{t('suggestions:colorWeight', { defaultValue: 'Color harmony (45%): neutrals pair with anything; one bold + neutrals scores well; two bolds need balance; neutral shoes help.' })}</li>
-            <li>{t('suggestions:seasonWeight', { defaultValue: 'Season match (40%): items tagged for the chosen season score highest; wrong-season items receive heavy penalties.' })}</li>
-            <li>{t('suggestions:varietyWeight', { defaultValue: 'Variety (15%): balanced mix of colors and all required pieces.' })}</li>
+            <li>{t('suggestions:colorWeight', { defaultValue: 'Color harmony (40%): neutrals pair with anything; one bold + neutrals scores well; two bolds need balance; neutral shoes help.' })}</li>
+            <li>{t('suggestions:seasonWeight', { defaultValue: 'Season match (35%): items tagged for the chosen season score highest; wrong-season items receive heavy penalties.' })}</li>
+            <li>{t('suggestions:styleWeight', { defaultValue: 'Style match (15%): higher score when items share cohesive or compatible styles (e.g., casual + casual/athleisure).' })}</li>
+            <li>{t('suggestions:varietyWeight', { defaultValue: 'Variety (10%): balanced mix of colors and all required pieces.' })}</li>
             <li>{t('suggestions:freshnessBonus', { defaultValue: 'Freshness: bonus for items not worn in the last 3 logs; repeats get small penalties.' })}</li>
             <li>{t('suggestions:accessoryBonus', { defaultValue: 'Accessory: small bonus; extra if accessory color complements.' })}</li>
             <li>{t('suggestions:bestCombos', { defaultValue: 'Best-scoring combos: all neutrals; one bold + two neutrals; two bolds with neutral shoes and good pairing; perfect-season matches.' })}</li>

@@ -8,6 +8,7 @@ CREATE TABLE clothing_items (
   type TEXT NOT NULL CHECK (type IN ('top', 'bottom', 'dress', 'outerwear', 'shoes', 'accessory')),
   color TEXT NOT NULL CHECK (color IN ('black', 'white', 'gray', 'blue', 'red', 'green', 'yellow', 'pink', 'purple', 'brown', 'orange', 'beige', 'navy')),
   seasons TEXT[] NOT NULL DEFAULT '{}', -- ['spring', 'summer', 'fall', 'winter']
+  styles TEXT[] NOT NULL DEFAULT '{}', -- ['casual','formal','sport','streetwear','outdoor','beach','home']
   image_url TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -36,12 +37,19 @@ CREATE TABLE wear_logs (
 CREATE INDEX idx_clothing_items_user_id ON clothing_items(user_id);
 CREATE INDEX idx_clothing_items_type ON clothing_items(type);
 CREATE INDEX idx_clothing_items_color ON clothing_items(color);
+CREATE INDEX idx_clothing_items_styles ON clothing_items USING GIN (styles);
 CREATE INDEX idx_saved_outfits_user_id ON saved_outfits(user_id);
 CREATE INDEX idx_wear_logs_user_id ON wear_logs(user_id);
 CREATE INDEX idx_wear_logs_worn_date ON wear_logs(worn_date);
 
 -- Row Level Security (RLS) Policies
 ALTER TABLE clothing_items ENABLE ROW LEVEL SECURITY;
+-- Valid values for clothing styles
+ALTER TABLE clothing_items
+  ADD CONSTRAINT chk_clothing_styles_valid
+  CHECK (styles <@ ARRAY[
+    'casual','formal','sport','streetwear','outdoor','beach','home'
+  ]::text[]);
 ALTER TABLE saved_outfits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wear_logs ENABLE ROW LEVEL SECURITY;
 

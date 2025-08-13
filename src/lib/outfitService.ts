@@ -7,6 +7,7 @@ import type { ClothingItem, Outfit, OutfitItem } from './supabase'
 export interface ScoreBreakdown {
   color: number
   season: number
+  style: number
   variety: number
   freshness: number
   accessory: number
@@ -112,6 +113,7 @@ export class OutfitSuggestionService {
               breakdown: {
                 color: 0,
                 season: 0,
+                style: 0,
                 variety: 0,
                 freshness: 0,
                 accessory: 0,
@@ -136,15 +138,16 @@ export class OutfitSuggestionService {
                     items: { top, bottom, shoes: shoe, accessory },
                     score: 0,
                     reasoning: [],
-                    breakdown: {
-                      color: 0,
-                      season: 0,
-                      variety: 0,
-                      freshness: 0,
-                      accessory: 0,
-                      penalties: 0,
-                      total: 0
-                    }
+                  breakdown: {
+                    color: 0,
+                    season: 0,
+                    style: 0,
+                    variety: 0,
+                    freshness: 0,
+                    accessory: 0,
+                    penalties: 0,
+                    total: 0
+                  }
                   })
                 }
               }
@@ -195,6 +198,7 @@ export class OutfitSuggestionService {
     const breakdown: ScoreBreakdown = {
       color: 0,
       season: 0,
+      style: 0,
       variety: 0,
       freshness: 0,
       accessory: 0,
@@ -202,13 +206,13 @@ export class OutfitSuggestionService {
       total: 0
     }
 
-    // 1. Color Harmony Score (45% weight)
+    // 1. Color Harmony Score (40% weight)
     const colorScore = ColorHarmonyEngine.scoreColorCombination(
       top.color,
       bottom.color,
       shoes.color
     )
-    breakdown.color = colorScore * 0.45
+    breakdown.color = colorScore * 0.40
     totalScore += breakdown.color
 
     // Add color reasoning
@@ -219,10 +223,10 @@ export class OutfitSuggestionService {
     )
     reasoning.push(...colorReasons)
 
-    // 2. Season Matching Score (40% weight - increased importance)
+    // 2. Season Matching Score (35% weight)
     if (seasonPreference) {
       const seasonScore = this.scoreSeasonMatch([top, bottom, shoes], seasonPreference)
-      breakdown.season = seasonScore * 0.4
+      breakdown.season = seasonScore * 0.35
       totalScore += breakdown.season
 
       // Check if any items are completely wrong for the season
@@ -243,20 +247,25 @@ export class OutfitSuggestionService {
       }
     } else {
       // No season preference, give neutral score
-      breakdown.season = 75 * 0.4
+      breakdown.season = 70 * 0.35
       totalScore += breakdown.season
     }
 
-    // 3. Variety/Balance Score (15% weight)
+    // 3. Style Compatibility (15% weight)
+    const styleScore = this.scoreStyleMatch([top, bottom, shoes])
+    breakdown.style = styleScore * 0.15
+    totalScore += breakdown.style
+
+    // 4. Variety/Balance Score (10% weight)
     const varietyScore = this.scoreItemVariety([top, bottom, shoes, accessory].filter(Boolean) as ClothingItem[])
-    breakdown.variety = varietyScore * 0.15
+    breakdown.variety = varietyScore * 0.10
     totalScore += breakdown.variety
 
     if (varietyScore >= 80) {
       reasoning.push(`Good variety in clothing types`)
     }
 
-    // 4. Variation rule (prefer items not in last N wear logs)
+    // 5. Variation rule (prefer items not in last N wear logs)
     if (recentItemIds && recentItemIds.size > 0) {
       const recentlyUsedCount = [top, bottom, shoes].filter((i) => recentItemIds.has(i.id)).length
       if (recentlyUsedCount === 0) {
@@ -274,7 +283,7 @@ export class OutfitSuggestionService {
       }
     }
 
-    // 5. Accessory bonus (if present)
+    // 6. Accessory bonus (if present)
     if (accessory) {
       // Small bonus for including accessories
       totalScore += 5
@@ -301,6 +310,42 @@ export class OutfitSuggestionService {
       reasoning: reasoning.slice(0, 3), // Limit to top 3 reasons
       breakdown
     }
+  }
+
+  /**
+   * Score how well item styles match
+   */
+  private static scoreStyleMatch(items: ClothingItem[]): number {
+    const stylesPerItem: Set<string>[] = items.map((i) => new Set<string>((((i as any).styles || []) as string[]).map((s) => String(s).toLowerCase())))
+    if (stylesPerItem.every(s => s.size === 0)) return 60
+
+    // If any common style across all main items → strong score
+    const common = [...stylesPerItem[0]].filter(s => stylesPerItem.slice(1).every(set => set.has(s)))
+    if (common.length > 0) return 100
+
+    // Pairwise compatibility matrix
+    const compat: Record<string, string[]> = {
+      casual: ['streetwear','outdoor','home','beach','sport','formal'],
+      formal: ['casual'],
+      sport: ['casual','outdoor','streetwear'],
+      streetwear: ['casual','sport'],
+      outdoor: ['casual','sport'],
+      beach: ['casual'],
+      home: ['casual']
+    }
+
+    const pairScore = (a: Set<string>, b: Set<string>) => {
+      if (a.size === 0 || b.size === 0) return 60
+      if ([...a].some(x => b.has(x))) return 85
+      if ([...a].some(x => (compat[x] || []).some(y => b.has(y)))) return 70
+      return 40
+    }
+
+    const p1 = pairScore(stylesPerItem[0], stylesPerItem[1])
+    const p2 = pairScore(stylesPerItem[1], stylesPerItem[2] ?? new Set<string>())
+    const p3 = pairScore(stylesPerItem[0], stylesPerItem[2] ?? new Set<string>())
+
+    return Math.round((p1 + p2 + p3) / 3)
   }
 
   /**

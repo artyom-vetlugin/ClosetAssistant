@@ -15,6 +15,9 @@ interface ItemDetailProps {
 const CLOTHING_TYPES = ['top', 'bottom', 'shoes', 'accessory']
 const COLORS = ['black', 'white', 'gray', 'brown', 'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'beige', 'navy']
 const SEASONS = ['spring', 'summer', 'fall', 'winter']
+const STYLES = [
+  'casual','formal','sport','streetwear','outdoor','beach','home'
+]
 
 export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDetailProps) {
   const { user } = useAuth()
@@ -28,7 +31,8 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
   const [editData, setEditData] = useState({
     type: item.type,
     color: item.color,
-    seasons: item.seasons || []
+    seasons: item.seasons || [],
+    styles: (item as any).styles || []
   })
 
   const handleSave = async () => {
@@ -43,7 +47,8 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
         id: item.id,
         type: editData.type,
         color: editData.color,
-        seasons: editData.seasons
+        seasons: editData.seasons,
+        styles: editData.styles
       })
       onUpdate(updatedItem)
       setIsEditing(false)
@@ -122,6 +127,15 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
     }))
   }
 
+  const toggleStyle = (style: string) => {
+    setEditData(prev => ({
+      ...prev,
+      styles: prev.styles.includes(style)
+        ? prev.styles.filter((s: string) => s !== style)
+        : [...prev.styles, style]
+    }))
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -181,6 +195,19 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                   ))}
                 </div>
               </div>
+
+              {(item as any).styles && (item as any).styles.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('itemDetail:stylesLabel', { defaultValue: 'Styles' })}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {((item as any).styles as string[]).map(style => (
+                      <span key={style} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm capitalize">
+                        {t(`common:styles.${style}`, style.replace('_', ' '))}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-4 space-y-2">
                 <button
@@ -243,6 +270,23 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('itemDetail:stylesLabel', { defaultValue: 'Styles' })}</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {STYLES.map(style => (
+                    <label key={style} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editData.styles.includes(style)}
+                        onChange={() => toggleStyle(style)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="capitalize">{t(`common:styles.${style}`, style.replace('_', ' '))}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex space-x-2 pt-4">
                 <button
                   onClick={handleSave}
@@ -257,7 +301,8 @@ export default function ItemDetail({ item, onClose, onUpdate, onDelete }: ItemDe
                     setEditData({
                       type: item.type,
                       color: item.color,
-                      seasons: item.seasons || []
+                      seasons: item.seasons || [],
+                      styles: (item as any).styles || []
                     })
                   }}
                   disabled={isLoading}

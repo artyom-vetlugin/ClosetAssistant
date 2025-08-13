@@ -5,6 +5,7 @@ export interface CreateClothingItemData {
   type: ClothingItem['type']
   color: ClothingItem['color']
   seasons: string[]
+  styles: string[]
   image_url: string
 }
 
@@ -16,6 +17,7 @@ export interface ClothingItemFilters {
   type?: string
   color?: string
   season?: string
+  style?: string
 }
 
 export class ClothingService {
@@ -60,6 +62,9 @@ export class ClothingService {
     }
     if (filters.season) {
       query = query.contains('seasons', [filters.season])
+    }
+    if (filters.style) {
+      query = query.contains('styles', [filters.style])
     }
 
     const { data, error } = await query

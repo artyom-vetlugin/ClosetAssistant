@@ -4,13 +4,13 @@ import type { ClothingItem } from './supabase'
 import { ClothingService } from './clothingService'
 
 const defaultItems = [
-  { id: 't1', type: 'top', color: 'blue', seasons: ['summer'], image_url: '', user_id: '', created_at: '', updated_at: '' },
-  { id: 'b1', type: 'bottom', color: 'white', seasons: ['summer'], image_url: '', user_id: '', created_at: '', updated_at: '' },
-  { id: 's1', type: 'shoes', color: 'gray', seasons: ['summer'], image_url: '', user_id: '', created_at: '', updated_at: '' },
-  { id: 'a1', type: 'accessory', color: 'black', seasons: ['all'], image_url: '', user_id: '', created_at: '', updated_at: '' },
+  { id: 't1', type: 'top', color: 'blue', seasons: ['summer'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
+  { id: 'b1', type: 'bottom', color: 'white', seasons: ['summer'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
+  { id: 's1', type: 'shoes', color: 'gray', seasons: ['summer'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
+  { id: 'a1', type: 'accessory', color: 'black', seasons: ['all'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
 ]
 
-let getItemsSpy: ReturnType<typeof vi.spyOn> | undefined
+let getItemsSpy: any
 
 beforeEach(() => {
   getItemsSpy?.mockRestore()
@@ -36,8 +36,8 @@ describe('OutfitSuggestionService.generateSuggestions', () => {
 
   it('throws INSUFFICIENT_ITEMS when a category is missing', async () => {
     ;(getItemsSpy as unknown as { mockResolvedValueOnce: (v: ClothingItem[]) => void }).mockResolvedValueOnce([
-      { id: 't1', type: 'top', color: 'blue', seasons: ['summer'], image_url: '', user_id: '', created_at: '', updated_at: '' },
-    ])
+      { id: 't1', type: 'top', color: 'blue', seasons: ['summer'], styles: ['casual'], image_url: '', user_id: '', created_at: '', updated_at: '' },
+    ] as unknown as ClothingItem[])
     await expect(
       OutfitSuggestionService.generateSuggestions()
     ).rejects.toThrowError(/INSUFFICIENT_ITEMS/)

@@ -215,6 +215,9 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
               <ul className="mt-2 text-xs text-gray-600 space-y-1">
                 <li>{t('outfitCard:breakdown.colorHarmony')}: +{Math.round(outfit.breakdown.color)}</li>
                 <li>{t('outfitCard:breakdown.seasonMatch')}: +{Math.round(outfit.breakdown.season)}</li>
+                {'style' in outfit.breakdown && (
+                  <li>{t('outfitCard:breakdown.styleMatch', { defaultValue: 'Style match' })}: +{Math.round((outfit.breakdown as any).style || 0)}</li>
+                )}
                 <li>{t('outfitCard:breakdown.variety')}: +{Math.round(outfit.breakdown.variety)}</li>
                 {outfit.breakdown.freshness !== 0 && (
                   <li>{t('outfitCard:breakdown.freshness')}: {outfit.breakdown.freshness > 0 ? '+' : ''}{Math.round(outfit.breakdown.freshness)}</li>
