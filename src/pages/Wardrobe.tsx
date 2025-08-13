@@ -94,7 +94,7 @@ const Wardrobe = () => {
       {/* Filters */}
       <div className="card">
         <h3 className="text-lg font-semibold mb-3">{t('wardrobe:filtersTitle')}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t('wardrobe:type')}
@@ -150,6 +150,25 @@ const Wardrobe = () => {
               <option value="summer">{t('common:seasons.summer')}</option>
               <option value="fall">{t('common:seasons.fall')}</option>
               <option value="winter">{t('common:seasons.winter')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('wardrobe:style')}
+            </label>
+            <select 
+              value={filters.style || ''}
+              onChange={(e) => handleFilterChange('style', e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="">{t('wardrobe:allStyles')}</option>
+              <option value="casual">{t('common:styles.casual')}</option>
+              <option value="formal">{t('common:styles.formal')}</option>
+              <option value="sport">{t('common:styles.sport')}</option>
+              <option value="streetwear">{t('common:styles.streetwear')}</option>
+              <option value="outdoor">{t('common:styles.outdoor')}</option>
+              <option value="beach">{t('common:styles.beach')}</option>
+              <option value="home">{t('common:styles.home')}</option>
             </select>
           </div>
         </div>
