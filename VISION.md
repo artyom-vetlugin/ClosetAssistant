@@ -50,10 +50,10 @@
 
 ### 5.2 Browse & Filter Wardrobe
 
-**As a** user, **I want** to filter items by type/color/season **so that** I can quickly find clothes.
+**As a** user, **I want** to filter items by type/color/season/style **so that** I can quickly find clothes.
 
 **Acceptance Criteria:**
-- Given items exist, when I tap **Filters**, **then** I can apply any combination of Type/Color/Season and see only matching items.
+- Given items exist, when I tap **Filters**, **then** I can apply any combination of Type/Color/Season/Style and see only matching items.
 - Clearing filters resets the list.
 
 ### 5.2b Edit & Delete Items
@@ -62,7 +62,8 @@
 
 **Acceptance Criteria:**
 - Given an item exists, when I tap on it in **My Wardrobe**, **then** I can see item details with **Edit** and **Delete** options.
-- When I tap **Edit**, I can modify Type, Color, Season, and save changes (photo remains the same).
+- When I tap **Edit**, I can modify Type, Color, Seasons, Styles, and save changes.
+- In item details, I can re-process the image to remove background and update the stored image.
 - When I tap **Delete** with confirmation, the item is permanently removed from my wardrobe.
 - After edit/delete, I return to the wardrobe view with updated data.
 
@@ -74,6 +75,8 @@
 - When I tap **Suggest Outfits**, the app returns **3–6** combinations using rules (see Section 6).
 - Suggestions include at least **Top + Bottom + Shoes**.
 - If there aren't enough items to form combinations, show a clear message and a shortcut to **Add Item**.
+- I can select a preferred season (defaults to current season); if none selected, current season is assumed.
+- I can toggle whether to include accessories in suggestions.
 
 ### 5.4 Visualize & Save Outfit
 
@@ -131,7 +134,7 @@ Scoring details (implemented):
 - id (uuid), email, display_name, created_at
 
 ### items
-- id (uuid), user_id (fk), **image_url**, **type** (top|bottom|dress|outerwear|shoes|accessory), **color** (string), **seasons** (text[] of 'spring'|'summer'|'fall'|'winter'|'all'), created_at
+- id (uuid), user_id (fk), **image_url**, **type** (top|bottom|dress|outerwear|shoes|accessory), **color** (string), **seasons** (text[] of 'spring'|'summer'|'fall'|'winter'|'all'), **styles** (text[]; e.g., 'casual','formal','sport','streetwear','outdoor','beach','home'), created_at
 
 ### outfits
 - id (uuid), user_id (fk), name, created_at
@@ -225,6 +228,7 @@ Scoring details (implemented):
 - Saved Outfits: inline rename (click name) with optimistic update; date-specific wear logging from the page
 - Saved Outfits: export outfit collage as PNG via html-to-image
 - Data model: items now support multi-season tags (`seasons[]`) and additional types (`dress`, `outerwear`)
+- Item Detail: post-upload background removal action to re-process and replace an item's image
 
 ## 10. Success Metrics (MVP)
 
