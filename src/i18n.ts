@@ -200,6 +200,7 @@ const resources = {
     },
     auth: {
       signInTitle: 'Sign in to Closet Assistant',
+      or: 'Or',
       orCreate: 'create a new account',
       email: 'Email address',
       emailPlaceholder: 'Enter your email',
@@ -423,6 +424,7 @@ const resources = {
     },
     auth: {
       signInTitle: 'Вход в Ассистент Гардероба',
+      or: 'Или',
       orCreate: 'создать новый аккаунт',
       email: 'Email',
       emailPlaceholder: 'Введите ваш email',
