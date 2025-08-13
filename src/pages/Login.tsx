@@ -56,8 +56,8 @@ const Login = () => {
             onChange={changeLang}
             className="text-sm border rounded px-2 py-1 bg-white"
           >
-            <option value="en">EN</option>
-            <option value="ru">RU</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="ru">🇷🇺 RU</option>
           </select>
         </div>
         <div>
