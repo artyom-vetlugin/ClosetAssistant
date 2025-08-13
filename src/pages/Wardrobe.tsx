@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ClothingService, type ClothingItemFilters } from '../lib/clothingService'
 import type { ClothingItem } from '../lib/supabase'
@@ -29,7 +29,7 @@ const Wardrobe = () => {
     loadItems()
   }, [filters])
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -41,7 +41,7 @@ const Wardrobe = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, t])
 
   const handleFilterChange = (filterType: keyof ClothingItemFilters, value: string) => {
     setFilters(prev => ({

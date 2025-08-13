@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { WearLogService } from '../lib/wearLogService'
 import type { ClothingItem, Outfit } from '../lib/supabase'
 import { useTranslation } from 'react-i18next'
@@ -15,8 +15,9 @@ const History = () => {
   const [pendingDate, setPendingDate] = useState<Record<string, string>>({})
   const { t } = useTranslation(['history'])
 
-  const sortLogsByDateDesc = (arr: WearLogWithOutfit[]) =>
-    [...arr].sort((a, b) => b.worn_date.localeCompare(a.worn_date))
+  const sortLogsByDateDesc = useCallback((arr: WearLogWithOutfit[]) =>
+    [...arr].sort((a, b) => b.worn_date.localeCompare(a.worn_date)),
+  [])
 
   useEffect(() => {
     ;(async () => {
@@ -29,7 +30,7 @@ const History = () => {
         setLoading(false)
       }
     })()
-  }, [])
+  }, [sortLogsByDateDesc, t])
 
   if (loading) return <div className="py-12 text-center text-gray-600">{t('history:loading')}</div>
   if (error) return <div className="py-12 text-center text-red-700">{error}</div>
@@ -117,7 +118,7 @@ const History = () => {
                       setDeletingId(log.id)
                       await WearLogService.deleteWearLog(log.id)
                       setLogs((prev) => prev.filter((l) => l.id !== log.id))
-                    } catch (e) {
+                    } catch {
                       setError(t('history:failedDelete'))
                     } finally {
                       setDeletingId('')

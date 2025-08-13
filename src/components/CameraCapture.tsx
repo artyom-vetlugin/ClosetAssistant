@@ -50,7 +50,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       const msg = err instanceof Error ? err.message : String(err)
       setError(t('camera:accessFailed', { message: msg }))
     }
-  }, [])
+  }, [t])
 
   const stopCamera = useCallback(() => {
     // Cancel any pending start timers to avoid re-attaching stream after stop
@@ -70,7 +70,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
       // Clear srcObject/src aggressively
       try {
         (v as HTMLVideoElement & { srcObject?: MediaStream | null }).srcObject = null
-      } catch {}
+      } catch { /* ignore cleanup errors */ }
       v.removeAttribute('src')
       v.removeAttribute('srcObject')
       v.src = ''
@@ -81,7 +81,7 @@ const CameraCapture = ({ onCapture, onCancel }: CameraCaptureProps) => {
         if (parent) {
           parent.removeChild(v)
         }
-      } catch {}
+      } catch { /* ignore cleanup errors */ }
     }
 
     if (stream) {

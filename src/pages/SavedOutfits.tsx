@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { OutfitSuggestionService } from '../lib/outfitService'
 import { WearLogService } from '../lib/wearLogService'
 import type { ClothingItem, Outfit } from '../lib/supabase'
@@ -16,7 +16,7 @@ const SavedOutfits = () => {
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
   const { t } = useTranslation(['saved'])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const res = await OutfitSuggestionService.getSavedOutfits()
@@ -26,11 +26,11 @@ const SavedOutfits = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   useEffect(() => {
     load()
-  }, [])
+  }, [load])
 
   const wearToday = async (outfitId: string) => {
     try {
