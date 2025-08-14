@@ -13,6 +13,7 @@ vi.mock('./supabase', () => {
 import { AIStylistService } from './aiService'
 import { supabase } from './supabase'
 import type { OutfitSuggestion } from './outfitService'
+import type { ClothingItem } from './supabase'
 
 const mockOpinion = {
   rating: 92,
@@ -27,9 +28,9 @@ const outfit: OutfitSuggestion = {
   score: 80,
   reasoning: [],
   items: {
-    top: { id: 't1', type: 'top', color: 'blue', image_url: 'top.jpg' } as any,
-    bottom: { id: 'b1', type: 'bottom', color: 'white', image_url: 'bottom.jpg' } as any,
-    shoes: { id: 's1', type: 'shoes', color: 'gray', image_url: 'shoes.jpg' } as any,
+    top: { id: 't1', type: 'top', color: 'blue', image_url: 'top.jpg' } as unknown as ClothingItem,
+    bottom: { id: 'b1', type: 'bottom', color: 'white', image_url: 'bottom.jpg' } as unknown as ClothingItem,
+    shoes: { id: 's1', type: 'shoes', color: 'gray', image_url: 'shoes.jpg' } as unknown as ClothingItem,
   },
   breakdown: { color: 0, season: 0, style: 0, variety: 0, freshness: 0, accessory: 0, penalties: 0, total: 80 },
 }
