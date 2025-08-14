@@ -28,13 +28,15 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       })
     }
-  } catch (_) {
+  } catch {
     // If project env vars are not present locally, we still allow for now
   }
 
-  let body: any
+  type ItemInput = { image_url: string; color?: string; type?: string }
+  type BodyInput = { items?: { top?: ItemInput; bottom?: ItemInput; shoes?: ItemInput; accessory?: ItemInput | null } }
+  let body: BodyInput
   try {
-    body = await req.json()
+    body = await req.json() as BodyInput
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
@@ -57,7 +59,7 @@ serve(async (req) => {
     })
   }
 
-  const content: any[] = [
+  const content: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [
     { type: "text", text: "Act as a professional fashion stylist. Evaluate the outfit for cohesion, color harmony, season appropriateness, and style. Return strict JSON: { rating: 0-100, summary: <=60 words, pros: string[<=3], cons: string[<=3], suggestions: string[<=3] }. Be concise." },
     { type: "text", text: `Top: ${items.top.color || ""} ${items.top.type || "top"}` },
     { type: "image_url", image_url: { url: items.top.image_url } },
