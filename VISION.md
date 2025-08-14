@@ -152,8 +152,9 @@ Scoring details (implemented):
 
 - **Frontend: React + Vite** + **PWA** (installable on iOS/Android/Desktop), **Tailwind CSS** for speed.
   - Why: One codebase; instantly demo-able on phones; no app-store friction.
-- **Backend & Auth & Storage: Supabase** (Postgres, Auth, Storage)
+- **Backend & Auth & Storage: Supabase** (Postgres, Auth, Storage, Edge Functions)
   - Why: You like SQL; easy row-level security; image storage out-of-the-box; free tier.
+  - Edge Functions: used to securely call OpenAI (no keys on client) for "Ask AI opinion".
   - Alternative: Firebase if you prefer it—same architecture.
 - **Image Handling:** client-side compression (e.g., browser-image-compression) before upload; **optional client-side background removal** using `@imgly/background-removal` (WASM) when user enables the toggle. Output stored as PNG/WebP to preserve transparency.
 - **State Management:** React Query (server state) + simple local component state.
@@ -229,6 +230,7 @@ Scoring details (implemented):
 - Saved Outfits: export outfit collage as PNG via html-to-image
 - Data model: items now support multi-season tags (`seasons[]`) and additional types (`dress`, `outerwear`)
 - Item Detail: post-upload background removal action to re-process and replace an item's image
+- AI Stylist Opinion: per-outfit "Ask AI opinion" button on `OutfitCard`. Invokes Supabase Edge Function `ai-opinion` that calls OpenAI Vision with item image URLs and returns strict JSON `{ rating, summary, pros[], cons[], suggestions[] }`. Result is displayed inline, cached client-side, and localized (keys: `outfitCard.askAI`, `outfitCard.askingAI`, `outfitCard.aiOpinion`). Unit tests added for service (`src/lib/aiService.test.ts`) and component (`src/components/OutfitCard.test.tsx`).
 
 ## 10. Success Metrics (MVP)
 

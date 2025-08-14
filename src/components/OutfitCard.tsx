@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { OutfitSuggestion } from '../lib/outfitService'
 import { useTranslation } from 'react-i18next'
+import { AIStylistService, type AIStylistOpinion } from '../lib/aiService'
 
 interface OutfitCardProps {
   outfit: OutfitSuggestion
@@ -15,6 +16,9 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
   const [saving, setSaving] = useState(false)
   const { t } = useTranslation(['outfitCard', 'common'])
   const [showDetails, setShowDetails] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiOpinion, setAiOpinion] = useState<AIStylistOpinion | null>(null)
 
   const handleSaveClick = () => {
     setShowSaveDialog(true)
@@ -36,6 +40,19 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
 
   const handleViewClick = () => {
     onView?.(outfit)
+  }
+
+  const handleAskAI = async () => {
+    setAiLoading(true)
+    setAiError('')
+    try {
+      const res = await AIStylistService.getOpinion(outfit)
+      setAiOpinion(res)
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const getScoreColor = (score: number) => {
@@ -236,6 +253,13 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
 
         {/* Actions */}
         <div className="flex gap-2">
+          <button
+            onClick={handleAskAI}
+            disabled={aiLoading}
+            className="flex-1 btn-secondary text-sm py-2 disabled:opacity-50"
+          >
+            {aiLoading ? t('outfitCard:askingAI', { defaultValue: 'Asking AI...' }) : t('outfitCard:askAI', { defaultValue: 'Ask AI opinion' })}
+          </button>
           {onView && (
             <button
               onClick={handleViewClick}
@@ -252,6 +276,28 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
             {saving ? t('outfitCard:saving') : t('outfitCard:saveLook')}
           </button>
         </div>
+
+        {aiError && (
+          <div className="mt-3 bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded text-sm">
+            {aiError}
+          </div>
+        )}
+        {aiOpinion && (
+          <div className="mt-3 bg-indigo-50 border border-indigo-200 text-indigo-900 px-3 py-2 rounded text-sm space-y-1">
+            <div className="font-medium">{t('outfitCard:aiOpinion', { defaultValue: 'AI opinion' })} — {aiOpinion.rating ?? '—'}/100</div>
+            <div>{aiOpinion.summary}</div>
+            {aiOpinion.pros?.length > 0 && (
+              <ul className="list-disc list-inside">
+                {aiOpinion.pros.slice(0, 3).map((p, i) => <li key={i}>+ {p}</li>)}
+              </ul>
+            )}
+            {aiOpinion.cons?.length > 0 && (
+              <ul className="list-disc list-inside">
+                {aiOpinion.cons.slice(0, 3).map((c, i) => <li key={i}>- {c}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Save Dialog Modal */}

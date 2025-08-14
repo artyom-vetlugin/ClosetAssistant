@@ -82,6 +82,9 @@ const resources = {
       nameOptional: 'Outfit Name (optional)',
       placeholder: 'Leave empty for auto-generated name',
       saving: 'Saving...',
+      askAI: 'Ask AI opinion',
+      askingAI: 'Asking AI...',
+      aiOpinion: 'AI opinion',
       showDetails: 'Show score details',
       hideDetails: 'Hide score details',
       breakdown: {
@@ -355,6 +358,9 @@ const resources = {
       nameOptional: 'Название образа (необязательно)',
       placeholder: 'Оставьте пустым для авто-имени',
       saving: 'Сохраняем...',
+      askAI: 'Спросить мнение ИИ',
+      askingAI: 'Спрашиваем ИИ...',
+      aiOpinion: 'Мнение ИИ',
       showDetails: 'Показать детали оценки',
       hideDetails: 'Скрыть детали оценки',
       breakdown: {
