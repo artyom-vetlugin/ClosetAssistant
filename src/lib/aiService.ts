@@ -25,9 +25,17 @@ export class AIStylistService {
     const cached = localStorage.getItem(this.cacheKey(key))
     if (cached) {
       try {
-        return JSON.parse(cached) as AIStylistOpinion
+        const parsed = JSON.parse(cached) as Partial<AIStylistOpinion>
+        const hasValidRating = typeof parsed.rating === 'number' && parsed.rating >= 0 && parsed.rating <= 100
+        const hasSomeContent = typeof parsed.summary === 'string' && parsed.summary.length > 0
+        if (hasValidRating || hasSomeContent) {
+          return parsed as AIStylistOpinion
+        }
+        // stale/empty cache from earlier failures — purge and continue to fetch fresh
+        localStorage.removeItem(this.cacheKey(key))
       } catch {
-        // ignore cache parse errors
+        // bad cache — purge and continue
+        localStorage.removeItem(this.cacheKey(key))
       }
     }
 
@@ -63,7 +71,10 @@ export class AIStylistService {
     })
 
     if (error) throw new Error(error.message || 'AI opinion failed')
-    if (!data) throw new Error('Empty AI response')
+    if (!data || (typeof data === 'object' && Object.keys(data as Record<string, unknown>).length === 0)) {
+      // Do not cache empty/invalid responses; allow user to retry
+      throw new Error('AI returned no opinion. Please try again.')
+    }
 
     localStorage.setItem(this.cacheKey(key), JSON.stringify(data))
     return data as AIStylistOpinion

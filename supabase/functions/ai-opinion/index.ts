@@ -1,8 +1,8 @@
 // @ts-nocheck
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { encode as b64encode } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+// Defer supabase-js import to runtime to avoid worker init failures on preflight
+// and avoid base64 std import by using built-in btoa
 
 const OPENAI_API_KEY = (globalThis as any).Deno?.env?.get("OPENAI_API_KEY")
 
@@ -29,6 +29,7 @@ serve(async (req) => {
     const supabaseUrl = (globalThis as any).Deno?.env?.get("SUPABASE_URL")
     const supabaseAnonKey = (globalThis as any).Deno?.env?.get("SUPABASE_ANON_KEY")
     if (!supabaseUrl || !supabaseAnonKey) throw new Error("Missing Supabase env vars")
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2")
     const s = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     })
@@ -76,7 +77,14 @@ serve(async (req) => {
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`)
     const contentType = res.headers.get("content-type") || "image/jpeg"
     const bytes = new Uint8Array(await res.arrayBuffer())
-    const b64 = b64encode(bytes)
+    // Encode bytes to base64 using btoa to avoid std encoding import issues
+    let binary = ""
+    const chunkSize = 0x8000
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize)
+      binary += String.fromCharCode(...chunk)
+    }
+    const b64 = btoa(binary)
     return `data:${contentType};base64,${b64}`
   }
 
@@ -143,12 +151,16 @@ serve(async (req) => {
       })
     }
     const data = await openaiRes.json()
-    const contentStr: string = data?.choices?.[0]?.message?.content ?? "{}"
+    const contentStr: string = data?.choices?.[0]?.message?.content ?? '{"summary":""}'
     let parsed: unknown
     try {
       parsed = JSON.parse(contentStr)
     } catch {
       parsed = { summary: contentStr }
+    }
+    // Ensure we never return an empty object
+    if (!parsed || (typeof parsed === "object" && Object.keys(parsed as Record<string, unknown>).length === 0)) {
+      parsed = { summary: "" }
     }
 
     return new Response(JSON.stringify(parsed), {
