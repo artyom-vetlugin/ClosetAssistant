@@ -57,6 +57,7 @@ serve(async (req) => {
   }
 
   const items = body?.items
+  const targetSeason = (body as any)?.season ?? null
   if (!items?.top?.image_url || !items?.bottom?.image_url || !items?.shoes?.image_url) {
     return new Response(JSON.stringify({ error: "Missing required images" }), {
       status: 400,
@@ -111,7 +112,7 @@ serve(async (req) => {
   }
 
   const content: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [
-    { type: "text", text: "Act as a professional fashion stylist. Evaluate the outfit for cohesion, color harmony, season appropriateness, and style. Return strict JSON: { rating: 0-100, summary: <=60 words, pros: string[<=3], cons: string[<=3], suggestions: string[<=3] }. Be concise." },
+    { type: "text", text: `Act as a professional fashion stylist. Score with this rubric: \n- Color harmony: 35%. Neutrals pair broadly; one bold + two neutrals is strong; two bolds need balance; neutral shoes help.\n- Season match: 35% relative to the target season (\"${targetSeason ?? 'unknown'}\"). If season is unknown, do not penalize. Apply a strong deduction (~30) per wrong-season main item (top/bottom/shoes).\n- Style cohesion: 20%. Favor shared or compatible styles; penalize a clear odd-one-out.\n- Variety/balance: 10%. Reward a balanced mix of types/colors.\n- Accessory bonus: +5 if present; +5 more if the accessory color complements top or bottom.\nReturn strict JSON: { rating: 0-100, summary: <=60 words, pros: string[<=3], cons: string[<=3], suggestions: string[<=3] }. Use the full 0–100 scale (50=mediocre, 65=okay, 75=good, 85=great, 95=excellent). Avoid defaulting to multiples of 5 unless strongly warranted.` },
     { type: "text", text: `Top: ${items.top.color || ""} ${items.top.type || "top"}` },
     { type: "image_url", image_url: { url: topData } },
     { type: "text", text: `Bottom: ${items.bottom.color || ""} ${items.bottom.type || "bottom"}` },
@@ -127,6 +128,9 @@ serve(async (req) => {
   }
 
   try {
+    // Generate a random seed to increase output diversity across calls
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0]
+
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -135,10 +139,12 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.3,
+        temperature: 0.8,
+        top_p: 0.9,
+        seed,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "You are a top-tier fashion stylist." },
+          { role: "system", content: "You are a top-tier fashion stylist. Follow the provided scoring rubric precisely and return only strict JSON (no prose outside JSON)." },
           { role: "user", content },
         ],
       }),

@@ -20,26 +20,41 @@ export class AIStylistService {
     return [top.id, bottom.id, shoes.id, accessory?.id || 'na'].join('|')
   }
 
-  static async getOpinion(outfit: OutfitSuggestion): Promise<AIStylistOpinion> {
+  static async getOpinion(
+    outfit: OutfitSuggestion,
+    opts?: { force?: boolean }
+  ): Promise<AIStylistOpinion> {
     const key = this.makeItemsKey(outfit)
-    const cached = localStorage.getItem(this.cacheKey(key))
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached) as Partial<AIStylistOpinion>
-        const hasValidRating = typeof parsed.rating === 'number' && parsed.rating >= 0 && parsed.rating <= 100
-        const hasSomeContent = typeof parsed.summary === 'string' && parsed.summary.length > 0
-        if (hasValidRating || hasSomeContent) {
-          return parsed as AIStylistOpinion
+    if (!opts?.force) {
+      const cached = localStorage.getItem(this.cacheKey(key))
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as Partial<AIStylistOpinion>
+          const hasValidRating = typeof parsed.rating === 'number' && parsed.rating >= 0 && parsed.rating <= 100
+          const hasSomeContent = typeof parsed.summary === 'string' && parsed.summary.length > 0
+          if (hasValidRating || hasSomeContent) {
+            return parsed as AIStylistOpinion
+          }
+          // stale/empty cache from earlier failures — purge and continue to fetch fresh
+          localStorage.removeItem(this.cacheKey(key))
+        } catch {
+          // bad cache — purge and continue
+          localStorage.removeItem(this.cacheKey(key))
         }
-        // stale/empty cache from earlier failures — purge and continue to fetch fresh
-        localStorage.removeItem(this.cacheKey(key))
-      } catch {
-        // bad cache — purge and continue
-        localStorage.removeItem(this.cacheKey(key))
       }
     }
 
+    // Prefer a season provided by the outfit suggestion pipeline if present on the object; otherwise fall back to current season.
+    const inferSeason = () => {
+      const m = new Date().getMonth() + 1
+      if (m >= 3 && m <= 5) return 'spring'
+      if (m >= 6 && m <= 8) return 'summer'
+      if (m >= 9 && m <= 11) return 'fall'
+      return 'winter'
+    }
+
     const payload = {
+      season: (outfit as any)?.seasonPreference || inferSeason(),
       items: {
         top: {
           image_url: outfit.items.top.image_url,

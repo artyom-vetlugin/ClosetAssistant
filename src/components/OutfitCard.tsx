@@ -42,11 +42,13 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
     onView?.(outfit)
   }
 
-  const handleAskAI = async () => {
+  const handleAskAI = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     setAiLoading(true)
     setAiError('')
     try {
-      const res = await AIStylistService.getOpinion(outfit)
+      // Hold Option/Alt or ⌘ to bypass cache and get a fresh, more diverse opinion
+      const force = !!(e?.altKey || e?.metaKey)
+      const res = await AIStylistService.getOpinion(outfit, { force })
       setAiOpinion(res)
     } catch (e) {
       setAiError(e instanceof Error ? e.message : String(e))
@@ -254,7 +256,7 @@ export default function OutfitCard({ outfit, onSave, onView, isSaving = false }:
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={handleAskAI}
+            onClick={(e) => handleAskAI(e)}
             disabled={aiLoading}
             className="flex-1 btn-secondary text-sm py-2 disabled:opacity-50"
           >
