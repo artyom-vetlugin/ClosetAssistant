@@ -64,7 +64,56 @@ export class ImageService {
     format: 'image/png' | 'image/webp' = 'image/png'
   ): Promise<File> {
     try {
-      const blob = await removeBg(file, { output: { format } })
+      // The background-removal package needs to fetch its model assets.
+      // When bundled, the auto-detected path can 404, so we provide a
+      // reliable CDN path with an optional env override.
+      const version = '1.7.0'
+      const rawPrimary = (import.meta as any)?.env?.VITE_IMGLY_PUBLIC_PATH ||
+        `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${version}/dist/`
+      const ensureTrailingSlash = (p: string) => (p.endsWith('/') ? p : `${p}/`)
+      const primaryPublicPath = ensureTrailingSlash(rawPrimary)
+
+      let blob: Blob | null = null
+      try {
+        blob = await removeBg(file, {
+          output: { format },
+          publicPath: primaryPublicPath,
+        })
+      } catch (primaryError) {
+        // Fallback to alternative CDNs and package roots
+        const candidates = [
+          `https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@${version}/dist/`,
+          `https://staticimgly.com/@imgly/background-removal-data/${version}/dist/`,
+          `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${version}/dist/`,
+          `https://unpkg.com/@imgly/background-removal@${version}/dist/`,
+        ].map(ensureTrailingSlash)
+
+        let success = false
+        let lastError: unknown = primaryError
+        for (const candidate of candidates) {
+          try {
+            blob = await removeBg(file, {
+              output: { format },
+              publicPath: candidate,
+            })
+            success = true
+            break
+          } catch (e) {
+            lastError = e
+          }
+        }
+        if (!success || !blob) {
+          try {
+            blob = await removeBg(file, { output: { format } })
+            success = true
+          } catch {
+            throw lastError
+          }
+        }
+      }
+      if (!blob) {
+        throw new Error('Failed to remove background')
+      }
       const ext = format === 'image/webp' ? 'webp' : 'png'
       const newName = file.name.replace(/\.[^/.]+$/, '') + `.${ext}`
       return new File([blob], newName, { type: format })
