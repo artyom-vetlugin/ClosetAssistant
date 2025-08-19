@@ -68,7 +68,7 @@ export class ImageService {
       // When bundled, the auto-detected path can 404, so we provide a
       // reliable CDN path with an optional env override.
       const version = '1.7.0'
-      const rawPrimary = (import.meta as any)?.env?.VITE_IMGLY_PUBLIC_PATH ||
+      const rawPrimary = import.meta.env?.VITE_IMGLY_PUBLIC_PATH ||
         `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${version}/dist/`
       const ensureTrailingSlash = (p: string) => (p.endsWith('/') ? p : `${p}/`)
       const primaryPublicPath = ensureTrailingSlash(rawPrimary)
