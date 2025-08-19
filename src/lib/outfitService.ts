@@ -206,13 +206,13 @@ export class OutfitSuggestionService {
       total: 0
     }
 
-    // 1. Color Harmony Score (40% weight)
+    // 1. Color Harmony Score (35% weight)
     const colorScore = ColorHarmonyEngine.scoreColorCombination(
       top.color,
       bottom.color,
       shoes.color
     )
-    breakdown.color = colorScore * 0.40
+    breakdown.color = colorScore * 0.35
     totalScore += breakdown.color
 
     // Add color reasoning
@@ -251,9 +251,9 @@ export class OutfitSuggestionService {
       totalScore += breakdown.season
     }
 
-    // 3. Style Compatibility (15% weight)
+    // 3. Style Compatibility (20% weight)
     const styleScore = this.scoreStyleMatch([top, bottom, shoes])
-    breakdown.style = styleScore * 0.15
+    breakdown.style = styleScore * 0.20
     totalScore += breakdown.style
 
     // 4. Variety/Balance Score (10% weight)
@@ -302,7 +302,25 @@ export class OutfitSuggestionService {
       }
     }
 
-    const final = Math.round(Math.max(0, Math.min(100, totalScore)))
+    // Ensure 100/100 is awarded only when all core criteria are perfect.
+    // Core criteria are: color, season, style, variety (weighted components only).
+    // Positive bonuses (freshness/accessory) should not allow hitting 100 unless
+    // color/season/style/variety each achieve their maximum raw scores.
+    // Determine perfection of core metrics using raw (pre-weight) scores
+    const isColorPerfect = ColorHarmonyEngine.scoreColorCombination(top.color, bottom.color, shoes.color) === 100
+    const rawSeasonScore = seasonPreference
+      ? this.scoreSeasonMatch([top, bottom, shoes], seasonPreference)
+      : 70 // baseline when no season pref
+    const isSeasonPerfect = seasonPreference ? rawSeasonScore === 100 : false
+    const rawStyleScore = this.scoreStyleMatch([top, bottom, shoes])
+    const isStylePerfect = rawStyleScore === 100
+    const rawVarietyScore = this.scoreItemVariety([top, bottom, shoes, accessory].filter(Boolean) as ClothingItem[])
+    const isVarietyPerfect = rawVarietyScore === 100
+
+    const canReachHundred = isColorPerfect && isSeasonPerfect && isStylePerfect && isVarietyPerfect
+    const upperBound = canReachHundred ? 100 : 99
+
+    const final = Math.round(Math.max(0, Math.min(upperBound, totalScore)))
     breakdown.total = final
 
     return {

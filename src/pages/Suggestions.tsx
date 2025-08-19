@@ -10,7 +10,7 @@ const Suggestions = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [seasonFilter, setSeasonFilter] = useState('')
-  const [includeAccessories, setIncludeAccessories] = useState(true)
+  const [includeAccessories, setIncludeAccessories] = useState(false)
   const [message, setMessage] = useState('')
   const { t } = useTranslation(['suggestions', 'common'])
 
