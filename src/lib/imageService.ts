@@ -225,40 +225,64 @@ export class ImageService {
       img.onload = () => {
         try {
           // Resize to small canvas for performance (100x100 pixels)
-          canvas.width = 100
-          canvas.height = 100
-          ctx.drawImage(img, 0, 0, 100, 100)
-          
+          const WIDTH = 100
+          const HEIGHT = 100
+          canvas.width = WIDTH
+          canvas.height = HEIGHT
+          ctx.drawImage(img, 0, 0, WIDTH, HEIGHT)
+
           // Get image data
-          const imageData = ctx.getImageData(0, 0, 100, 100)
+          const imageData = ctx.getImageData(0, 0, WIDTH, HEIGHT)
+          const data = imageData.data
           const colorCounts: { [key: string]: number } = {}
-          
-          // Sample pixels and count colors (every 4th pixel for performance)
-          for (let i = 0; i < imageData.data.length; i += 16) {
-            const r = imageData.data[i]
-            const g = imageData.data[i + 1]
-            const b = imageData.data[i + 2]
-            const alpha = imageData.data[i + 3]
-            
-            // Skip transparent pixels
-            if (alpha < 128) continue
-            
-            // Convert RGB to color name
-            const colorName = this.rgbToColorName(r, g, b)
-            colorCounts[colorName] = (colorCounts[colorName] || 0) + 1
+
+          // Focus on the center region to avoid background dominance
+          const MARGIN = 15 // pixels trimmed from each edge
+          for (let y = MARGIN; y < HEIGHT - MARGIN; y += 2) {
+            for (let x = MARGIN; x < WIDTH - MARGIN; x += 2) {
+              const idx = (y * WIDTH + x) * 4
+              const r = data[idx]
+              const g = data[idx + 1]
+              const b = data[idx + 2]
+              const alpha = data[idx + 3]
+              if (alpha < 128) continue
+
+              const maxCh = Math.max(r, g, b)
+              const minCh = Math.min(r, g, b)
+              const brightness = (r + g + b) / 3
+
+              // Ignore near-pure whites and very low-saturation light grays (backgrounds)
+              if (r > 240 && g > 240 && b > 240) continue
+              if (brightness > 220 && (maxCh - minCh) < 20) continue
+
+              const colorName = this.rgbToColorName(r, g, b)
+              colorCounts[colorName] = (colorCounts[colorName] || 0) + 1
+            }
           }
-          
+
           // Find most frequent color
           const colors = Object.keys(colorCounts)
           if (colors.length === 0) {
             resolve('gray') // fallback
             return
           }
-          
-          const dominantColor = colors.reduce((a, b) => 
+
+          let dominantColor = colors.reduce((a, b) =>
             colorCounts[a] > colorCounts[b] ? a : b
           )
-          
+
+          // De-bias: if white barely beats beige/brown, prefer the material color
+          if (dominantColor === 'white') {
+            const whiteCount = colorCounts['white'] || 0
+            const beigeCount = colorCounts['beige'] || 0
+            const brownCount = colorCounts['brown'] || 0
+            const candidate = beigeCount >= brownCount ? 'beige' : 'brown'
+            const candidateCount = Math.max(beigeCount, brownCount)
+            if (candidateCount > 0 && candidateCount / (whiteCount + candidateCount) > 0.3) {
+              dominantColor = candidate
+            }
+          }
+
           resolve(dominantColor)
         } catch (error) {
           reject(error)
@@ -283,7 +307,7 @@ export class ImageService {
     // Define color ranges for common clothing colors
     const colorRanges: ColorRange[] = [
       { name: 'black', r: [0, 60], g: [0, 60], b: [0, 60] },
-      { name: 'white', r: [200, 255], g: [200, 255], b: [200, 255] },
+      { name: 'white', r: [230, 255], g: [230, 255], b: [230, 255] },
       { name: 'gray', r: [80, 180], g: [80, 180], b: [80, 180] },
       { name: 'red', r: [120, 255], g: [0, 80], b: [0, 80] },
       { name: 'blue', r: [0, 80], g: [0, 120], b: [120, 255] },
@@ -306,7 +330,7 @@ export class ImageService {
     }
     
     // Special case for very bright colors
-    if (brightness > 220 && Math.abs(r - g) < 30 && Math.abs(g - b) < 30) {
+    if (brightness > 240 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20) {
       return 'white'
     }
     

@@ -4,14 +4,18 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. Using placeholder values for development.')
+	if (import.meta.env.PROD) {
+		throw new Error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY at build time')
+	} else {
+		console.warn('Missing Supabase envs; using placeholders for local dev only')
+	}
 }
 
-// Use placeholder values if environment variables are not set (for development)
-const url = supabaseUrl || 'https://placeholder.supabase.co'
-const key = supabaseAnonKey || 'placeholder-key'
 
-export const supabase = createClient(url, key)
+export const supabase = createClient(
+	supabaseUrl ?? 'https://placeholder.supabase.co',
+	supabaseAnonKey ?? 'placeholder-key'
+)
 
 // Database types based on our VISION.md schema
 export interface ClothingItem {
