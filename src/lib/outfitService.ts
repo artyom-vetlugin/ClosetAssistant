@@ -341,6 +341,20 @@ export class OutfitSuggestionService {
     const common = [...stylesPerItem[0]].filter(s => stylesPerItem.slice(1).every(set => set.has(s)))
     if (common.length > 0) return 100
 
+    // Odd-one-out detection: if two items share a style that the third lacks → strong penalty
+    const styleCounts: Record<string, number> = {}
+    for (const set of stylesPerItem) {
+      for (const s of set) styleCounts[s] = (styleCounts[s] || 0) + 1
+    }
+    const majorityStyles = Object.entries(styleCounts).filter(([, c]) => c >= 2).map(([s]) => s)
+    if (majorityStyles.length > 0) {
+      const itemsMissingMajority = stylesPerItem.filter((set) => !majorityStyles.some((ms) => set.has(ms))).length
+      if (itemsMissingMajority === 1) {
+        // Cap low when exactly one item does not share the majority style(s)
+        return 25
+      }
+    }
+
     // Pairwise compatibility matrix
     const compat: Record<string, string[]> = {
       casual: ['streetwear','outdoor','home','beach','sport','formal'],
