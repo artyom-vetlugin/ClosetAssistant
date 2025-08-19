@@ -88,6 +88,7 @@
 - Saved looks appear in **Saved Outfits** list.
 - From **Saved Outfits**, I can click the outfit name to rename it inline (saves on blur/Enter, with optimistic UI).
 - From **Saved Outfits**, I can export the outfit collage as a PNG image for sharing.
+- From **Saved Outfits**, I can delete a saved outfit (no confirmation; optimistic remove with revert on failure).
 
 ### 5.5 Log Today's Outfit
 
@@ -119,22 +120,27 @@ Start with deterministic, readable rules:
   - Avoid pairing identical bold colors unless they're neutrals.
   - **Neutrals** = black, white, gray, beige, navy. Neutrals can pair with anything.
   - If both Top and Bottom are non-neutral, suggest Shoes neutral.
+- **Style cohesion:** Prefer items that share cohesive or compatible styles (e.g., casual + casual/athleisure). Penalize a clear odd-one-out when two items share a style the third lacks.
 - **Variation rule:** Prefer using items not used in the **last 3 worn logs** to surface underused pieces.
 - Generate up to **6** unique combinations; de-duplicate by item IDs.
 
 Scoring details (implemented):
-- Color harmony 45%, season 40%, variety/balance 15%, small accessory bonuses; top 3 reasoning points shown.
-- If a season preference is set, adjacent seasons get partial credit; clearly wrong-season items incur heavy penalties.
+- Weights: color harmony 35%, season 35%, style cohesion 20%, variety/balance 10%.
+- Accessories: +5 for including an accessory, +5 more if the accessory color complements the top/bottom.
+- Season: adjacent seasons get partial credit; each wrong-season main item incurs a −30 penalty.
+- Reasoning: top 3 points are shown.
+- Score ceiling: 100 only when all core metrics (color, season, style, variety) are perfect; otherwise capped at 99.
+- Filtering: combos below a minimum score are dropped (≥60 with no season preference; ≥65 when a season is specified).
 
-> Implementation tip: pre-compute neutral vs non-neutral at tag time. Keep rules in one file (e.g., `rules.ts`) for easy iteration.
+> Implementation tip: pre-compute neutral vs non-neutral at tag time. Core scoring is in `src/lib/outfitService.ts`; color logic is in `src/lib/colorRules.ts`.
 
 ## 7. Data Model
 
 ### users
 - id (uuid), email, display_name, created_at
 
-### items
-- id (uuid), user_id (fk), **image_url**, **type** (top|bottom|dress|outerwear|shoes|accessory), **color** (string), **seasons** (text[] of 'spring'|'summer'|'fall'|'winter'|'all'), **styles** (text[]; e.g., 'casual','formal','sport','streetwear','outdoor','beach','home'), created_at
+### clothing_items
+- id (uuid), user_id (fk), **image_url**, **type** (top|bottom|dress|outerwear|shoes|accessory), **color** (string), **seasons** (text[] of 'spring'|'summer'|'fall|'winter'|'all'), **styles** (text[]; e.g., 'casual','formal','sport','streetwear','outdoor','beach','home'), created_at, updated_at
 
 ### outfits
 - id (uuid), user_id (fk), name, created_at
@@ -146,7 +152,7 @@ Scoring details (implemented):
 - id (uuid), user_id (fk), outfit_id (fk), worn_date (date), created_at
 
 ### Indexes
-- items(user_id, type), items(user_id, color), outfit_items(outfit_id), wear_logs(user_id, worn_date), optional GIN index on items.seasons for season queries
+- clothing_items(user_id, type), clothing_items(user_id, color), outfit_items(outfit_id), wear_logs(user_id, worn_date), optional GIN index on clothing_items.seasons for season queries
 
 ## 8. Tech Stack (Ship Fast on Web & Mobile)
 
@@ -230,7 +236,7 @@ Scoring details (implemented):
 - Saved Outfits: export outfit collage as PNG via html-to-image
 - Data model: items now support multi-season tags (`seasons[]`) and additional types (`dress`, `outerwear`)
 - Item Detail: post-upload background removal action to re-process and replace an item's image
-- AI Stylist Opinion: per-outfit "Ask AI opinion" button on `OutfitCard`. Invokes Supabase Edge Function `ai-opinion` that calls OpenAI Vision with item image URLs and returns strict JSON `{ rating, summary, pros[], cons[], suggestions[] }`. Result is displayed inline, cached client-side, and localized (keys: `outfitCard.askAI`, `outfitCard.askingAI`, `outfitCard.aiOpinion`). Unit tests added for service (`src/lib/aiService.test.ts`) and component (`src/components/OutfitCard.test.tsx`).
+- AI Stylist Opinion: per-outfit "Ask AI opinion" button on `OutfitCard`. Invokes Supabase Edge Function `ai-opinion` that calls OpenAI Vision with the outfit's images and returns strict JSON `{ rating, summary, pros[], cons[], suggestions[] }`. The Edge Function fetches the Supabase public image URLs server-side and sends them to OpenAI as base64 data URLs to avoid external fetch timeouts; responses are cached in `localStorage` per outfit and can be bypassed by holding Option/Alt or ⌘ when clicking. Result is displayed inline and localized (keys: `outfitCard.askAI`, `outfitCard.askingAI`, `outfitCard.aiOpinion`). Unit tests added for service (`src/lib/aiService.test.ts`) and component (`src/components/OutfitCard.test.tsx`).
 
 ## 10. Success Metrics (MVP)
 
