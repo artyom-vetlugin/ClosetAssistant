@@ -53,8 +53,13 @@ export class AIStylistService {
       return 'winter'
     }
 
+    const seasonFromOutfit = (() => {
+      const candidate = (outfit as unknown as { seasonPreference?: unknown }).seasonPreference
+      return typeof candidate === 'string' ? candidate : undefined
+    })()
+
     const payload = {
-      season: (outfit as any)?.seasonPreference || inferSeason(),
+      season: seasonFromOutfit || inferSeason(),
       items: {
         top: {
           image_url: outfit.items.top.image_url,
