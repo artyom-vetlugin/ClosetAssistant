@@ -16,6 +16,7 @@ const SavedOutfits = () => {
   const [wearSavingId, setWearSavingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const { t } = useTranslation(['saved'])
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const exportRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -29,6 +30,9 @@ const SavedOutfits = () => {
     const top = items.find((i) => i.type === 'top')
     const bottom = items.find((i) => i.type === 'bottom')
     return [top, bottom, shoes].filter(Boolean) as ClothingItem[]
+  }
+  const toggleDetails = (id: string) => {
+    setExpandedId(prev => (prev === id ? null : id))
   }
 
   const exportCard = async (id: string) => {
@@ -223,40 +227,47 @@ const SavedOutfits = () => {
                   >
                     {deletingId === o.id ? t('saved:deleting') : t('saved:delete')}
                   </button>
-                  <details className="flex-1">
-                    <summary className="btn-secondary w-full">{t('saved:details')}</summary>
-                    <div className="mt-3 text-sm text-gray-700">
-                      <div className="grid grid-cols-3 gap-2">
-                        {items.map((it) => (
-                          <div key={it.id} className="text-center">
-                            <img src={it.image_url} className="aspect-square object-cover rounded mb-1" />
-                            <div className="capitalize text-xs">{it.type}</div>
-                            <div className="capitalize text-xs text-gray-500">{it.color}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        <label className="block text-xs text-gray-600">{t('saved:selectDate')}</label>
-                        <div className="flex gap-2 items-center">
-                          <input
-                            type="date"
-                            max={new Date().toISOString().slice(0, 10)}
-                            value={wearDateByOutfit[o.id] ?? new Date().toISOString().slice(0, 10)}
-                            onChange={(e) => setWearDateByOutfit((prev) => ({ ...prev, [o.id]: e.target.value }))}
-                            className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <button
-                            className="btn-primary flex-1"
-                            onClick={() => logWearWithDate(o.id, wearDateByOutfit[o.id])}
-                            disabled={wearSavingId === o.id}
-                          >
-                            {wearSavingId === o.id ? t('saved:saving') : t('saved:logWear')}
-                          </button>
+                  <button
+                    className="btn-secondary flex-1"
+                    onClick={() => toggleDetails(o.id)}
+                    aria-expanded={expandedId === o.id}
+                    aria-controls={`details-${o.id}`}
+                  >
+                    {expandedId === o.id ? t('saved:hideDetails', { defaultValue: 'Hide details' }) : t('saved:showDetails', { defaultValue: 'Show details' })}
+                  </button>
+                </div>
+                {expandedId === o.id && (
+                  <div id={`details-${o.id}`} className="mt-3 text-sm text-gray-700">
+                    <div className="grid grid-cols-3 gap-2">
+                      {items.map((it) => (
+                        <div key={it.id} className="text-center">
+                          <img src={it.image_url} className="aspect-square object-cover rounded mb-1" />
+                          <div className="capitalize text-xs">{it.type}</div>
+                          <div className="capitalize text-xs text-gray-500">{it.color}</div>
                         </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <label className="block text-xs text-gray-600">{t('saved:selectDate')}</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="date"
+                          max={new Date().toISOString().slice(0, 10)}
+                          value={wearDateByOutfit[o.id] ?? new Date().toISOString().slice(0, 10)}
+                          onChange={(e) => setWearDateByOutfit((prev) => ({ ...prev, [o.id]: e.target.value }))}
+                          className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <button
+                          className="btn-primary flex-1"
+                          onClick={() => logWearWithDate(o.id, wearDateByOutfit[o.id])}
+                          disabled={wearSavingId === o.id}
+                        >
+                          {wearSavingId === o.id ? t('saved:saving') : t('saved:logWear')}
+                        </button>
                       </div>
                     </div>
-                  </details>
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}

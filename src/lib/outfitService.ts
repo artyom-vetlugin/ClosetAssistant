@@ -532,38 +532,13 @@ export class OutfitSuggestionService {
       // Generate outfit name
       const name = customName || this.generateOutfitName(suggestion)
 
-      // 1. Try new schema: outfits + outfit_items
       const { data: outfit, error: outfitError } = await supabase
         .from('outfits')
         .insert({ user_id: user.data.user.id, name })
         .select()
         .single()
 
-      if (outfitError) {
-        // If table doesn't exist, fallback to legacy saved_outfits schema
-        const tableMissing = (outfitError as { code?: string; message?: string }).code === '42P01' || String((outfitError as { message?: string }).message || '').includes('outfits')
-        if (!tableMissing) {
-          throw outfitError
-        }
-
-        const itemIds = [
-          suggestion.items.top.id,
-          suggestion.items.bottom.id,
-          suggestion.items.shoes.id,
-          suggestion.items.accessory?.id,
-        ].filter(Boolean) as string[]
-
-        const { data: legacy, error: legacyError } = await supabase
-          .from('saved_outfits')
-          .insert({ user_id: user.data.user.id, name, item_ids: itemIds })
-          .select()
-          .single()
-
-        if (legacyError) throw legacyError
-        // Coerce legacy row to Outfit shape for return consistency
-        const row = legacy as unknown as { id: string; user_id: string; name: string; created_at: string }
-        return { id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at }
-      }
+      if (outfitError) throw outfitError
 
       // 2. Create outfit_items records
       const outfitItems: OutfitItem[] = [
@@ -673,36 +648,7 @@ export class OutfitSuggestionService {
           )
         `)
         .order('created_at', { ascending: false })
-
-      if (error) {
-        const tableMissing = (error as { code?: string; message?: string }).code === '42P01' || String((error as { message?: string }).message || '').includes('outfits')
-        if (!tableMissing) {
-          throw error
-        }
-
-        // Fallback to legacy saved_outfits schema
-        const { data: legacy, error: legacyError } = await supabase
-          .from('saved_outfits')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (legacyError) throw legacyError
-
-        const legacyOutfits = (legacy || []) as { id: string; user_id: string; name: string; created_at: string; item_ids: string[] }[]
-        const results: (Outfit & { items: ClothingItem[] })[] = []
-
-        for (const row of legacyOutfits) {
-          const ids = row.item_ids || []
-          const { data: items, error: itemsErr } = await supabase
-            .from('clothing_items')
-            .select('*')
-            .in('id', ids)
-          if (itemsErr) throw itemsErr
-          results.push({ id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at, items: (items || []) as ClothingItem[] })
-        }
-
-        return results
-      }
+      if (error) throw error
 
       // Transform the data structure with explicit typing
       interface OutfitWithItems extends Outfit {
@@ -738,26 +684,8 @@ export class OutfitSuggestionService {
         .eq('id', outfitId)
         .select()
         .single()
-
-      if (!error && data) return data as Outfit
-
-      // If table missing -> legacy fallback
-      const tableMissing = (error as { code?: string; message?: string } | null)?.code === '42P01' || String((error as { message?: string } | null)?.message || '').includes('outfits')
-      if (!tableMissing) {
-        throw error
-      }
-
-      const { data: legacy, error: legacyErr } = await supabase
-        .from('saved_outfits')
-        .update({ name })
-        .eq('id', outfitId)
-        .select()
-        .single()
-
-      if (legacyErr) throw legacyErr
-
-      const row = legacy as unknown as { id: string; user_id: string; name: string; created_at: string }
-      return { id: row.id, user_id: row.user_id, name: row.name, created_at: row.created_at }
+      if (error) throw error
+      return data as Outfit
     } catch (error) {
       console.error('Error renaming outfit:', error)
       throw new Error('Failed to rename outfit')
@@ -774,25 +702,7 @@ export class OutfitSuggestionService {
         .from('outfits')
         .delete()
         .eq('id', outfitId)
-
-      if (!error) {
-        // outfit_items have ON DELETE CASCADE; wear_logs reference may also cascade per schema
-        return
-      }
-
-      const tableMissing = (error as { code?: string; message?: string } | null)?.code === '42P01' || String((error as { message?: string } | null)?.message || '').includes('outfits')
-      if (!tableMissing) {
-        // Actual failure deleting from new schema
-        throw error
-      }
-
-      // Legacy fallback
-      const { error: legacyErr } = await supabase
-        .from('saved_outfits')
-        .delete()
-        .eq('id', outfitId)
-
-      if (legacyErr) throw legacyErr
+      if (error) throw error
     } catch (error) {
       console.error('Error deleting outfit:', error)
       throw new Error('Failed to delete outfit')
