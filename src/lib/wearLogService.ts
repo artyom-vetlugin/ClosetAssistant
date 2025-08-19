@@ -5,12 +5,53 @@ export class WearLogService {
   static async logWear(outfitId: string, date?: string): Promise<void> {
     const user = await supabase.auth.getUser()
     if (!user.data.user) throw new Error('Not authenticated')
-    const { error } = await supabase.from('wear_logs').insert({
+    const payload = {
       user_id: user.data.user.id,
       outfit_id: outfitId,
       worn_date: date ?? new Date().toISOString().slice(0, 10),
-    })
-    if (error) throw error
+    }
+
+    // Try new schema first (wear_logs with outfit_id reference to outfits)
+    const { error } = await supabase.from('wear_logs').insert(payload)
+    if (!error) return
+
+    // Fallback for legacy schema: wear_logs requires item_ids and outfit_id references saved_outfits
+    try {
+      // Determine item_ids from either outfits -> outfit_items (new) or saved_outfits (legacy)
+      let itemIds: string[] | null = null
+
+      // Try outfits + outfit_items first
+      const { data: oi, error: oiErr } = await supabase
+        .from('outfit_items')
+        .select('item_id')
+        .eq('outfit_id', outfitId)
+
+      if (!oiErr && oi && oi.length) {
+        itemIds = (oi as { item_id: string }[]).map((x) => x.item_id)
+      } else {
+        // Try legacy saved_outfits
+        const { data: legacy, error: legacyErr } = await supabase
+          .from('saved_outfits')
+          .select('item_ids')
+          .eq('id', outfitId)
+          .single()
+        if (!legacyErr && legacy && (legacy as { item_ids?: string[] }).item_ids) {
+          itemIds = ((legacy as { item_ids?: string[] }).item_ids || [])
+        }
+      }
+
+      if (!itemIds || itemIds.length === 0) {
+        throw error
+      }
+
+      const { error: legacyInsertErr } = await supabase.from('wear_logs').insert({
+        ...payload,
+        item_ids: itemIds,
+      })
+      if (legacyInsertErr) throw legacyInsertErr
+    } catch (fallbackErr) {
+      throw fallbackErr
+    }
   }
 
   static async deleteWearLog(logId: string): Promise<void> {

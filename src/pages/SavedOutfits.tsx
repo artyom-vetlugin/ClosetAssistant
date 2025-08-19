@@ -14,6 +14,7 @@ const SavedOutfits = () => {
   const [editingName, setEditingName] = useState('')
   const [savingId, setSavingId] = useState<string | null>(null)
   const [wearSavingId, setWearSavingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [wearDateByOutfit, setWearDateByOutfit] = useState<Record<string, string>>({})
   const { t } = useTranslation(['saved'])
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -138,6 +139,25 @@ const SavedOutfits = () => {
     }
   }
 
+  const deleteOutfit = async (id: string) => {
+    setDeletingId(id)
+    const prev = outfits
+    // optimistic remove
+    setOutfits((cur) => cur.filter((o) => o.id !== id))
+    try {
+      await OutfitSuggestionService.deleteOutfit(id)
+      setMessage(t('saved:deletedSuccess', { defaultValue: 'Deleted' }))
+      setTimeout(() => setMessage(''), 1500)
+    } catch {
+      // revert on failure
+      setOutfits(prev)
+      setError(t('saved:failedDelete', { defaultValue: 'Failed to delete outfit' }))
+      setTimeout(() => setError(''), 2500)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">{t('saved:title')}</h1>
@@ -193,8 +213,15 @@ const SavedOutfits = () => {
                   <button className="btn-primary flex-1" onClick={() => wearToday(o.id)} disabled={wearSavingId === o.id}>
                     {wearSavingId === o.id ? t('saved:saving') : t('saved:woreToday')}
                   </button>
-                  <button className="btn-secondary" onClick={() => exportCard(o.id)}>
+                  <button className="btn-secondary flex-1" onClick={() => exportCard(o.id)}>
                     {t('saved:export', { defaultValue: 'Export' })}
+                  </button>
+                  <button
+                    className="btn-secondary flex-1"
+                    onClick={() => deleteOutfit(o.id)}
+                    disabled={deletingId === o.id}
+                  >
+                    {deletingId === o.id ? t('saved:deleting') : t('saved:delete')}
                   </button>
                   <details className="flex-1">
                     <summary className="btn-secondary w-full">{t('saved:details')}</summary>

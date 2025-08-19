@@ -763,4 +763,39 @@ export class OutfitSuggestionService {
       throw new Error('Failed to rename outfit')
     }
   }
+
+  /**
+   * Delete a saved outfit (supports both new and legacy schemas)
+   */
+  static async deleteOutfit(outfitId: string): Promise<void> {
+    try {
+      // Try new schema first
+      const { error } = await supabase
+        .from('outfits')
+        .delete()
+        .eq('id', outfitId)
+
+      if (!error) {
+        // outfit_items have ON DELETE CASCADE; wear_logs reference may also cascade per schema
+        return
+      }
+
+      const tableMissing = (error as { code?: string; message?: string } | null)?.code === '42P01' || String((error as { message?: string } | null)?.message || '').includes('outfits')
+      if (!tableMissing) {
+        // Actual failure deleting from new schema
+        throw error
+      }
+
+      // Legacy fallback
+      const { error: legacyErr } = await supabase
+        .from('saved_outfits')
+        .delete()
+        .eq('id', outfitId)
+
+      if (legacyErr) throw legacyErr
+    } catch (error) {
+      console.error('Error deleting outfit:', error)
+      throw new Error('Failed to delete outfit')
+    }
+  }
 }

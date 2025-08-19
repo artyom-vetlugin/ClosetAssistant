@@ -214,6 +214,8 @@ const resources = {
       failedRename: 'Failed to rename outfit',
       delete: 'Delete',
       deleting: 'Deleting…',
+      deletedSuccess: 'Outfit deleted',
+      failedDelete: 'Failed to delete outfit',
       clickToRename: 'Click to rename',
     },
     history: {
@@ -490,6 +492,8 @@ const resources = {
       failedRename: 'Не удалось переименовать',
       delete: 'Удалить',
       deleting: 'Удаляем…',
+      deletedSuccess: 'Образ удален',
+      failedDelete: 'Не удалось удалить образ',
       clickToRename: 'Нажмите, чтобы переименовать',
     },
     history: {
